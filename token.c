@@ -41,14 +41,10 @@ token_name (tokentype_t token) {
 
 /* WARNING: must be destroyed with 'token_destroy()' */
 token_t
-token_create (tokentype_t type, char ch) {
-	char *string = (char *) malloc(sizeof(char) + 1);
-	string[0] = ch;
-	string[1] = '\0';
-
+token_create (tokentype_t type, char *ch) {
 	token_t token = {
 		.type = type,
-		.literal = string,
+		.literal = strdup(ch),
 	};
 
 	return token;

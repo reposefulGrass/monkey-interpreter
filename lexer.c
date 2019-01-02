@@ -60,11 +60,7 @@ lexer_read_identifier (lexer_t *l) {
 	}
 
 	int length = l->pos - start;
-	
-	char *ident = (char *) malloc(sizeof(char) * length + 1);
-	strncpy(ident, l->input + start, length);	
-
-	ident[length] = '\0';
+	char *ident = strndup(l->input + start, length);
 
 	return ident;
 }
@@ -114,83 +110,69 @@ lexer_next_token (lexer_t *l) {
 		case '=':
 			if (lexer_peek_char(l) == '=') {
 				lexer_read_char(l);
-
-				char *equal = (char *) malloc(sizeof(char) * 3);
-				equal[0] = '=';
-				equal[1] = '=';
-				equal[2] = '\0';			
-
-				tok.type = TOKEN_EQ;
-				tok.literal = equal;
+				tok = token_create(TOKEN_EQ, "==");
 			}		
 			else {
-				tok = token_create(TOKEN_ASSIGN, l->ch);
+				tok = token_create(TOKEN_ASSIGN, &l->ch);
 			}
 			break;
 
 		case '+':
-			tok = token_create(TOKEN_PLUS, l->ch);
+			tok = token_create(TOKEN_PLUS, &l->ch);
 			break;
 
 		case '-':
-			tok = token_create(TOKEN_MINUS, l->ch);
+			tok = token_create(TOKEN_MINUS, &l->ch);
 			break;
 
 		case '!':
 			if (lexer_peek_char(l) == '=') {
 				lexer_read_char(l);
-
-				char *not_equal = (char *) malloc(sizeof(char) * 3);
-				not_equal[0] = '!';
-				not_equal[1] = '=';
-				not_equal[2] = '\0';			
-
-				tok.type = TOKEN_NEQ;
-				tok.literal = not_equal;
+				tok = token_create(TOKEN_NEQ, "!=");
 			}
 			else {
-				tok = token_create(TOKEN_BANG, l->ch);
+				tok = token_create(TOKEN_BANG, &l->ch);
 			}
 			break;
 
 		case '/':
-			tok = token_create(TOKEN_SLASH, l->ch);
+			tok = token_create(TOKEN_SLASH, &l->ch);
 			break;
 
 		case '*':
-			tok = token_create(TOKEN_ASTERISK, l->ch);
+			tok = token_create(TOKEN_ASTERISK, &l->ch);
 			break;
 
 		case '<':
-			tok = token_create(TOKEN_LT, l->ch);
+			tok = token_create(TOKEN_LT, &l->ch);
 			break;
 
 		case '>':
-			tok = token_create(TOKEN_GT, l->ch);
+			tok = token_create(TOKEN_GT, &l->ch);
 			break;
 
 		case ';':
-			tok = token_create(TOKEN_SEMICOLON, l->ch);
+			tok = token_create(TOKEN_SEMICOLON, &l->ch);
 		break;
 
 		case ',':
-			tok = token_create(TOKEN_COMMA, l->ch);
+			tok = token_create(TOKEN_COMMA, &l->ch);
 		break;
 
 		case '(':
-			tok = token_create(TOKEN_LPAREN, l->ch);
+			tok = token_create(TOKEN_LPAREN, &l->ch);
 		break;	  
 
 		case ')':
-			tok = token_create(TOKEN_RPAREN, l->ch);
+			tok = token_create(TOKEN_RPAREN, &l->ch);
 		break;
 
 		case '{':
-			tok = token_create(TOKEN_LBRACE, l->ch);
+			tok = token_create(TOKEN_LBRACE, &l->ch);
 		break;
 
 		case '}':
-			tok = token_create(TOKEN_RBRACE, l->ch);
+			tok = token_create(TOKEN_RBRACE, &l->ch);
 		break;
 
 		case '\0':
@@ -210,7 +192,7 @@ lexer_next_token (lexer_t *l) {
 				return tok;
 			}
 			else {
-				tok = token_create(TOKEN_ILLEGAL, l->ch);
+				tok = token_create(TOKEN_ILLEGAL, &l->ch);
 			}
 		break;
 	}

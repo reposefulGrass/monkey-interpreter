@@ -18,6 +18,7 @@ typedef enum {
 typedef struct {
 	statement_type_t type;	
 	void *statement;
+	// GENERIC FUNCTION POINTERS?
 } statement_t;
 
 
@@ -28,12 +29,13 @@ typedef enum {
 typedef struct {
 	expression_type_t type;
 	void *expression;
+	// GENERIC FUNCTION POINTERS?
 } expression_t;
 
 
 typedef struct {
 	token_t token;
-	identifier_t name;
+	identifier_t name; /* possibly a pointer? */
 	expression_t value;
 } statement_let_t;
 
