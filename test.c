@@ -4,17 +4,107 @@
 #include <string.h>
 #include <stdbool.h>
 
+#include "linked_list.h"
 #include "token.h"
 #include "lexer.h"
+#include "parser.h"
+#include "ast.h"
+
 
 #define TRUE  1
 #define FALSE 0
 
 void test_token ();
+void test_let_statements();
 
 int 
 main () {
-	test_token();
+	//test_token();
+	test_let_statements();
+}
+
+bool
+test_let_statement (statement_t *stmt, char *expected_identifier) {
+	if (strmp(stmt->token_literal(stmt), "let") != 0) {
+		printf(
+			"ERROR: stmt->token_literal() not 'let'. got '%s'\n", 
+			stmt->token_literal(stmt)
+		);
+		return false;
+	}
+
+	if (stmt->type != STATEMENT_LET) {
+		printf("ERROR: stmt->type not STATEMENT_LET. got '%d'\n", stmt->type);
+		return false;
+	}
+
+	statement_let_t *let_stmt = (statement_let_t *) (stmt->stmt);
+	
+	if (strcmp(let_stmt->name.value, expected_identifier) != 0) {
+		printf(
+			"ERROR: let_stmt->name.value not '%s'. got '%s'.\n",
+			expected_identifier,
+			let_stmt->name.value
+		);
+		return false;
+	}
+
+	if (strcmp(let_stmt->name.token.literal, expected_identifier) == 0) {
+		printf(
+			"ERROR: let_stmt->name.token.literal not '%s'. got '%s'.\n",
+			expected_identifier,
+			let_stmt->name.token.literal
+		);
+		return false;
+	}
+
+	return true;
+}
+
+void
+test_let_statements() {
+	char *input = "\
+let x = 5;\
+let y = 10;\
+let foobar = 838383;"
+
+	lexer_t *lexer = lexer_create(input);
+	parser_t *parser = parser_create(lexer);
+
+	program_t *program = parser_parse_program(parser);
+
+	if (program == NULL) {
+		printf("ERROR: Failed to initialize program_t!\n");
+		goto free_resources;
+	}
+
+	if (ll_length(program->statements) != 3) {
+		printf("ERROR: The number of statements is not 3!\n");
+		goto free_resources;
+	}
+
+	char *tests[] = {
+		"x",
+		"y",
+		"foobar"
+	}
+
+	int index = 0;
+	list cursor = NULL;
+	while ((cursor = ll_iterator(program->statements, cursor)) != NULL) {
+		statement *stmt = ast_get_stmt(cursor);
+		if (!test_let_statement(stmt, tests[index])) {
+			goto free_resources;
+		}
+		
+		index++;	
+	}
+
+free_resources:
+	//free(program);
+	//parser_destroy_program(program); /* ll_destroy()? */
+	free(parser);
+	free(lexer);	
 }
 
 void 

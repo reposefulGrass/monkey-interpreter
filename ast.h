@@ -2,6 +2,9 @@
 #ifndef AST_H
 #define AST_H
 
+#include "linked_list.h"
+#include "token.h"
+
 /* The identifier type is special, because we treat it
  * as an expression but its not simply for convience.
 */
@@ -15,21 +18,26 @@ typedef enum {
 	STATEMENT_LET
 } statement_type_t;
 
-typedef struct {
+/* Whenever a statement_t is created, you must set 'type' properly 
+ * and must set the function 'token_literal' to its corresponding type.
+*/
+typedef struct statement_t {
 	statement_type_t type;	
-	void *statement;
-	// GENERIC FUNCTION POINTERS?
-} statement_t;
+	void *stmt;
+
+	char *(*token_literal)(struct statement_t *stmt);
+} statement_t; 
 
 
 typedef enum {
 	EXPRESSION_IDENTIFIER
 } expression_type_t;
 
-typedef struct {
+typedef struct expression_t {
 	expression_type_t type;
 	void *expression;
-	// GENERIC FUNCTION POINTERS?
+
+	char (*token_literal)(struct expression_t *expr);
 } expression_t;
 
 
@@ -41,11 +49,11 @@ typedef struct {
 
 
 typedef struct {
-	statement_t *statements;
+	list statements;
 } program_t;
 
 
-// FUNCTION HEADERS HERE
+statement_t *ast_get_stmt (list stmt);
 
 
 #endif /* AST_H */
