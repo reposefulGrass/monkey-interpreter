@@ -22,5 +22,5 @@ linked_list.o : linked_list.c linked_list.h
 	gcc linked_list.c -c $(FLAGS)
 
 clean : 
-	rm test token.o lexer.o
+	rm monkey test *.o
 

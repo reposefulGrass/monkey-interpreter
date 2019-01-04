@@ -2,11 +2,10 @@
 #ifndef LINKED_LIST_H
 #define LINKED_LIST_H
 
+#include <stdbool.h>
+
 typedef enum { OK, ERROR }
 	status;
-
-typedef enum { FALSE = 0, TRUE = 1 }
-	bool;
 
 typedef void *
 	generic_ptr;

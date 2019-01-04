@@ -25,7 +25,7 @@ main () {
 
 bool
 test_let_statement (statement_t *stmt, char *expected_identifier) {
-	if (strmp(stmt->token_literal(stmt), "let") != 0) {
+	if (strcmp(stmt->token_literal(stmt), "let") != 0) {
 		printf(
 			"ERROR: stmt->token_literal() not 'let'. got '%s'\n", 
 			stmt->token_literal(stmt)
@@ -66,7 +66,7 @@ test_let_statements() {
 	char *input = "\
 let x = 5;\
 let y = 10;\
-let foobar = 838383;"
+let foobar = 838383;";
 
 	lexer_t *lexer = lexer_create(input);
 	parser_t *parser = parser_create(lexer);
@@ -87,12 +87,12 @@ let foobar = 838383;"
 		"x",
 		"y",
 		"foobar"
-	}
+	};
 
 	int index = 0;
 	list cursor = NULL;
 	while ((cursor = ll_iterator(program->statements, cursor)) != NULL) {
-		statement *stmt = ast_get_stmt(cursor);
+		statement_t *stmt = ast_get_stmt(cursor);
 		if (!test_let_statement(stmt, tests[index])) {
 			goto free_resources;
 		}

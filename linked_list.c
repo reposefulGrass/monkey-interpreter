@@ -63,7 +63,7 @@ status ll_initialize (list *p_l) {
 }
 
 bool ll_is_empty (list l) {
-	return (l == NULL)? TRUE : FALSE;
+	return (l == NULL)? true : false;
 }
 
 int ll_length (list p_l) {
@@ -237,8 +237,8 @@ bool ll_equal (
 	list curr2 = *p_list2;
 
 	while (curr1 != NULL && curr2 != NULL) {
-		if ((*p_cmp_f)(DATA(curr1), DATA(curr2)) == FALSE) {
-			return FALSE;
+		if ((*p_cmp_f)(DATA(curr1), DATA(curr2)) == false) {
+			return false;
 		}			
 
 		curr1 = NEXT(curr1);
@@ -246,10 +246,10 @@ bool ll_equal (
 	}
 
 	if (!ll_is_empty(curr1) || !ll_is_empty(curr2)) {
-		return FALSE;
+		return false;
 	}
 
-	return TRUE;
+	return true;
 }
 
 status ll_copy (list from, list *p_to, size_t size, void (*p_copy_f)()) {

@@ -19,13 +19,15 @@ typedef enum {
 } statement_type_t;
 
 /* Whenever a statement_t is created, you must set 'type' properly 
- * and must set the function 'token_literal' to its corresponding type.
+ * and must set the function 'token_literal', 'destroy' to its 
+ * corresponding type.
 */
 typedef struct statement_t {
 	statement_type_t type;	
 	void *stmt;
 
 	char *(*token_literal)(struct statement_t *stmt);
+	void (*destroy)(struct statement_t *stmt);
 } statement_t; 
 
 
@@ -33,11 +35,16 @@ typedef enum {
 	EXPRESSION_IDENTIFIER
 } expression_type_t;
 
+/* Whenever an expression_t is created, you must set 'type' properly
+ * and must set the functions 'token_literal', 'destroy' to its
+ * corresponding type.
+*/
 typedef struct expression_t {
 	expression_type_t type;
 	void *expression;
 
 	char (*token_literal)(struct expression_t *expr);
+	void (*destroy)(struct expression_t *expr);
 } expression_t;
 
 

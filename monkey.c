@@ -1,6 +1,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include "stdlib.h"
 
 #include "token.h"
 #include "lexer.h"
@@ -24,6 +25,9 @@ int main () {
 				token_name(token.type), 
 				token.literal
 			);
+			token_destroy(&token);
 		}
+		
+		free(l);
 	} while (strncmp(line, "quit", 4) != 0);
 }
