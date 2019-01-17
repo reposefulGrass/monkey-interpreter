@@ -1,26 +1,38 @@
 
-HEADERS = token.h lexer.h ast.h linked_list.h
-LIBS = token.o lexer.o ast.o linked_list.o
+HEADERS = token.h lexer.h ast.h parser.h
+LIBS = token.o lexer.o ast.o parser.o
+DEPS = linked_list/linked_list.o
 FLAGS = -Wall -g
+MAKE_FLAGS = --no-print-directory
 
 monkey : monkey.c $(LIBS) $(HEADERS)
-	gcc monkey.c -o monkey $(LIBS) $(FLAGS)
+	@cd linked_list && make linked_list.o $(MAKE_FLAGS) && cd ..
+	@echo 'Compiling [monkey.c]'
+	@gcc monkey.c -o monkey $(LIBS) $(DEPS) $(FLAGS)
 
 test : test.c $(LIBS) $(HEADERS)
-	gcc test.c -o test $(LIBS) $(FLAGS)
+	@cd linked_list && make linked_list.o $(MAKE_FLAGS) && cd ..
+	@echo 'Compiling [test.c]'
+	@gcc test.c -o test $(LIBS) $(DEPS) $(FLAGS)
 
 token.o : token.c token.h
-	gcc token.c -c $(FLAGS)
+	@echo 'Compiling [token.c]'
+	@gcc token.c -c $(FLAGS)
 
 lexer.o : lexer.c lexer.h token.h
-	gcc lexer.c -c $(FLAGS)
+	@echo 'Compiling [lexer.c]'
+	@gcc lexer.c -c $(FLAGS)
 
 ast.o : ast.c ast.h
-	gcc ast.c -c $(FLAGS)
+	@echo 'Compiling [ast.c]'
+	@gcc ast.c -c $(FLAGS)
 
-linked_list.o : linked_list.c linked_list.h
-	gcc linked_list.c -c $(FLAGS)
+parser.o : parser.c parser.h
+	@echo 'Compiling [parser.c]'
+	@gcc parser.c -c $(FLAGS)
 
 clean : 
-	rm monkey test *.o
+	@cd linked_list && make clean $(MAKE_FLAGS) && cd ..
+	@echo 'Removing test and all object files'
+	@rm -f monkey test *.o 
 

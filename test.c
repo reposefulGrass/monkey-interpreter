@@ -4,7 +4,7 @@
 #include <string.h>
 #include <stdbool.h>
 
-#include "linked_list.h"
+#include "linked_list/linked_list.h"
 #include "token.h"
 #include "lexer.h"
 #include "parser.h"
@@ -25,6 +25,12 @@ main () {
 
 bool
 test_let_statement (statement_t *stmt, char *expected_identifier) {
+
+	if (stmt->type != STATEMENT_LET) {
+		printf("ERROR: stmt->type not STATEMENT_LET. got '%d'\n", stmt->type);
+		return false;
+	}
+
 	if (strcmp(stmt->token_literal(stmt), "let") != 0) {
 		printf(
 			"ERROR: stmt->token_literal() not 'let'. got '%s'\n", 
@@ -33,27 +39,13 @@ test_let_statement (statement_t *stmt, char *expected_identifier) {
 		return false;
 	}
 
-	if (stmt->type != STATEMENT_LET) {
-		printf("ERROR: stmt->type not STATEMENT_LET. got '%d'\n", stmt->type);
-		return false;
-	}
-
-	statement_let_t *let_stmt = (statement_let_t *) (stmt->stmt);
+	statement_let_t let_stmt = stmt->statement.let;
 	
-	if (strcmp(let_stmt->name.value, expected_identifier) != 0) {
-		printf(
-			"ERROR: let_stmt->name.value not '%s'. got '%s'.\n",
-			expected_identifier,
-			let_stmt->name.value
-		);
-		return false;
-	}
-
-	if (strcmp(let_stmt->name.token.literal, expected_identifier) == 0) {
+	if (strcmp(let_stmt.name.token_literal(&let_stmt.name), expected_identifier) == 0) {
 		printf(
 			"ERROR: let_stmt->name.token.literal not '%s'. got '%s'.\n",
 			expected_identifier,
-			let_stmt->name.token.literal
+			let_stmt.name.token_literal(&let_stmt.name)
 		);
 		return false;
 	}
@@ -74,7 +66,7 @@ let foobar = 838383;";
 	program_t *program = parser_parse_program(parser);
 
 	if (program == NULL) {
-		printf("ERROR: Failed to initialize program_t!\n");
+		printf("ERROR: Failed to initialize 'program'!\n");
 		goto free_resources;
 	}
 
@@ -92,7 +84,7 @@ let foobar = 838383;";
 	int index = 0;
 	list cursor = NULL;
 	while ((cursor = ll_iterator(program->statements, cursor)) != NULL) {
-		statement_t *stmt = ast_get_stmt(cursor);
+		statement_t *stmt = (statement_t *) cursor->data;
 		if (!test_let_statement(stmt, tests[index])) {
 			goto free_resources;
 		}
@@ -104,7 +96,7 @@ free_resources:
 	//free(program);
 	//parser_destroy_program(program); /* ll_destroy()? */
 	free(parser);
-	free(lexer);	
+	lexer_destroy(lexer);
 }
 
 void 
@@ -248,5 +240,5 @@ if (5 < 10) {\
 		printf("Test 'token' has passed!\n");
 	}
 
-	free(lexer);
+	lexer_destroy(lexer);
 }

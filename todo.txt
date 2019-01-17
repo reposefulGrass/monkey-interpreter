@@ -1,0 +1,5 @@
+
+	Contemplate seperating statement_t into its own source and header file with corresponding
+functions for allocating and freeing statements
+
+

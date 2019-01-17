@@ -51,6 +51,7 @@ typedef struct {
 char 	   *token_name 			(tokentype_t type);
 token_t 	token_create 		(tokentype_t type, char *ch); 
 void 		token_destroy 		(token_t *token);
+token_t		token_dup			(token_t token);
 tokentype_t token_lookup_ident 	(char *identifier);
 
 

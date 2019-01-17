@@ -27,6 +27,12 @@ lexer_create (char *input) {
 	return l;
 }
 
+void
+lexer_destroy (lexer_t *l) {
+	// if 'input' points to allocated memory, free it.
+	free(l);
+}
+
 void 
 lexer_read_char (lexer_t *l) {
 	if (l->read_pos >= l->length) {
@@ -113,16 +119,16 @@ lexer_next_token (lexer_t *l) {
 				tok = token_create(TOKEN_EQ, "==");
 			}		
 			else {
-				tok = token_create(TOKEN_ASSIGN, &l->ch);
+				tok = token_create(TOKEN_ASSIGN, "=");
 			}
 			break;
 
 		case '+':
-			tok = token_create(TOKEN_PLUS, &l->ch);
+			tok = token_create(TOKEN_PLUS, "+");
 			break;
 
 		case '-':
-			tok = token_create(TOKEN_MINUS, &l->ch);
+			tok = token_create(TOKEN_MINUS, "-");
 			break;
 
 		case '!':
@@ -131,48 +137,48 @@ lexer_next_token (lexer_t *l) {
 				tok = token_create(TOKEN_NEQ, "!=");
 			}
 			else {
-				tok = token_create(TOKEN_BANG, &l->ch);
+				tok = token_create(TOKEN_BANG, "!");
 			}
 			break;
 
 		case '/':
-			tok = token_create(TOKEN_SLASH, &l->ch);
+			tok = token_create(TOKEN_SLASH, "/");
 			break;
 
 		case '*':
-			tok = token_create(TOKEN_ASTERISK, &l->ch);
+			tok = token_create(TOKEN_ASTERISK, "*");
 			break;
 
 		case '<':
-			tok = token_create(TOKEN_LT, &l->ch);
+			tok = token_create(TOKEN_LT, "<");
 			break;
 
 		case '>':
-			tok = token_create(TOKEN_GT, &l->ch);
+			tok = token_create(TOKEN_GT, ">");
 			break;
 
 		case ';':
-			tok = token_create(TOKEN_SEMICOLON, &l->ch);
+			tok = token_create(TOKEN_SEMICOLON, ";");
 		break;
 
 		case ',':
-			tok = token_create(TOKEN_COMMA, &l->ch);
+			tok = token_create(TOKEN_COMMA, ",");
 		break;
 
 		case '(':
-			tok = token_create(TOKEN_LPAREN, &l->ch);
+			tok = token_create(TOKEN_LPAREN, "(");
 		break;	  
 
 		case ')':
-			tok = token_create(TOKEN_RPAREN, &l->ch);
+			tok = token_create(TOKEN_RPAREN, ")");
 		break;
 
 		case '{':
-			tok = token_create(TOKEN_LBRACE, &l->ch);
+			tok = token_create(TOKEN_LBRACE, "{");
 		break;
 
 		case '}':
-			tok = token_create(TOKEN_RBRACE, &l->ch);
+			tok = token_create(TOKEN_RBRACE, "}");
 		break;
 
 		case '\0':

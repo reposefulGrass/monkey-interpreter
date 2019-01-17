@@ -55,6 +55,16 @@ token_destroy (token_t *token) {
 	if (token->type != TOKEN_EOF) {
 		free(token->literal);	
 	}
+	token->literal = NULL;
+}
+
+token_t		
+token_dup (token_t token) {
+	token_t t;
+	t.type = token.type;
+	t.literal = strdup(token.literal);
+
+	return t;
 }
 
 tokentype_t
