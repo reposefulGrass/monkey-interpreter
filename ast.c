@@ -29,10 +29,9 @@ ast_stmt_let_token_literal (statement_t *stmt) {
 
 void
 ast_stmt_let_destroy (statement_t *stmt) {
-	//token_destroy(&stmt->statment.let.token);
-	//free(stmt); ???
+	token_destroy(&stmt->statement.let.token);
 	ast_expr_ident_destroy(&stmt->statement.let.name);		
-	// free 'value'
+	free(stmt);
 }
 
 char *
@@ -70,6 +69,12 @@ ast_identifier_create (token_t token) {
 	return expr;
 }
 
+void
+ast_statement_destroy (void *data) {
+	statement_t *stmt = (statement_t *) data;
+	stmt->destroy(stmt);	
+}
+
 program_t *
 ast_program_create () {
 	program_t *program = (program_t *) malloc(sizeof(program_t));
@@ -84,7 +89,7 @@ ast_program_create () {
 
 void
 ast_program_destroy (program_t *program) {
-	return;
+	ll_destroy(&program->statements, ast_statement_destroy);
 }
 
 

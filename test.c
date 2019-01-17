@@ -11,9 +11,6 @@
 #include "ast.h"
 
 
-#define TRUE  1
-#define FALSE 0
-
 void test_token ();
 void test_let_statements();
 
@@ -21,6 +18,21 @@ int
 main () {
 	//test_token();
 	test_let_statements();
+}
+
+bool
+string_compare (const char *str, const char *to) {
+	if (strlen(str) != strlen(to)) {
+		return false;
+	}
+
+	for (; str && to; str++, to++) {
+		if (*str != *to) {
+			return false;
+		}
+	}
+
+	return true;
 }
 
 bool
@@ -40,8 +52,9 @@ test_let_statement (statement_t *stmt, char *expected_identifier) {
 	}
 
 	statement_let_t let_stmt = stmt->statement.let;
-	
-	if (strcmp(let_stmt.name.token_literal(&let_stmt.name), expected_identifier) == 0) {
+
+	char *literal = let_stmt.name.token_literal(&let_stmt.name);	
+	if (string_compare(literal, expected_identifier)) {
 		printf(
 			"ERROR: let_stmt->name.token.literal not '%s'. got '%s'.\n",
 			expected_identifier,
@@ -60,17 +73,21 @@ let x = 5;\
 let y = 10;\
 let foobar = 838383;";
 
+	bool passed = true;
+
 	lexer_t *lexer = lexer_create(input);
 	parser_t *parser = parser_create(lexer);
 
 	program_t *program = parser_parse_program(parser);
 
 	if (program == NULL) {
+		passed = false;
 		printf("ERROR: Failed to initialize 'program'!\n");
 		goto free_resources;
 	}
 
 	if (ll_length(program->statements) != 3) {
+		passed = false;
 		printf("ERROR: The number of statements is not 3!\n");
 		goto free_resources;
 	}
@@ -86,6 +103,7 @@ let foobar = 838383;";
 	while ((cursor = ll_iterator(program->statements, cursor)) != NULL) {
 		statement_t *stmt = (statement_t *) cursor->data;
 		if (!test_let_statement(stmt, tests[index])) {
+			passed = false;
 			goto free_resources;
 		}
 		
@@ -93,10 +111,18 @@ let foobar = 838383;";
 	}
 
 free_resources:
-	//free(program);
+	ast_program_destroy(program);
 	//parser_destroy_program(program); /* ll_destroy()? */
 	free(parser);
 	lexer_destroy(lexer);
+	free(program);
+
+	if (passed == false) {
+		printf("Test 'let_statements' has failed!\n");
+	}
+	else {
+		printf("Test 'let_statements' has passed!\n");
+	}
 }
 
 void 
