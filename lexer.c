@@ -27,9 +27,14 @@ lexer_create (char *input) {
 	return l;
 }
 
+// If free() is passed to p_func, it free's lexer's 'input'.
+// Else if its NULL, then do nothing; you would do this if 
+// 'input' points to non-allocated memory.
 void
-lexer_destroy (lexer_t *l) {
-	// if 'input' points to allocated memory, free it.
+lexer_destroy (lexer_t *l, void (*p_func)()) {
+	if (p_func != NULL) {
+		(*p_func)(l->input);
+	}
 	free(l);
 }
 

@@ -11,6 +11,7 @@ typedef struct {
 } parser_t;
 
 parser_t 	*parser_create 				(lexer_t *l);
+void		 parser_destroy				(parser_t *p, void (*p_func)());
 void	  	 parser_next_token	 		(parser_t *p);
 program_t 	*parser_parse_program 		(parser_t *p);
 statement_t *parser_parse_statement 	(parser_t *p);

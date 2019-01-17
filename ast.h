@@ -27,7 +27,6 @@ typedef struct expression_t {
 	void (*destroy)(struct expression_t *expr);
 } expression_t;
 
-
 expression_t ast_identifier_create (token_t token);
 
 char *ast_expr_ident_token_literal 	(expression_t *expr);
@@ -56,6 +55,8 @@ typedef struct statement_t {
 	void (*destroy)(struct statement_t *stmt);
 } statement_t; 
 
+void  ast_statement_destroy 		(void *data);
+
 char *ast_stmt_let_token_literal 	(statement_t *stmt);
 void  ast_stmt_let_destroy 			(statement_t *stmt);
 
@@ -65,12 +66,10 @@ typedef struct {
 	list statements;
 } program_t;
 
-
 program_t *ast_program_create 	();
 void	   ast_program_destroy 	(program_t *program);
 
 char *ast_program_token_literal (program_t *p);
-
 
 
 #endif /* AST_H */

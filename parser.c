@@ -27,6 +27,12 @@ parser_create (lexer_t *l) {
 	return p;
 }
 
+void
+parser_destroy (parser_t *p, void (*p_func)()) {
+	lexer_destroy(p->lexer, p_func);
+	free(p);
+}
+
 void 
 parser_next_token (parser_t *p) {
 	if (p == NULL) {

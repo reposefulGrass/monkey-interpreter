@@ -4,15 +4,7 @@
 #include "ast.h"
 
 
-char *
-ast_program_token_literal (program_t *p) {
-	if (! ll_is_empty(p->statements)) {
-		statement_t *stmt = (statement_t *) p->statements->data;
-		return stmt->token_literal(stmt);
-	}
-	
-	return "";
-}
+// ======== STATEMENT METHODS ========
 
 char *
 ast_stmt_let_token_literal (statement_t *stmt) {
@@ -29,10 +21,21 @@ ast_stmt_let_token_literal (statement_t *stmt) {
 
 void
 ast_stmt_let_destroy (statement_t *stmt) {
-	token_destroy(&stmt->statement.let.token);
-	ast_expr_ident_destroy(&stmt->statement.let.name);		
+	statement_let_t let_stmt = stmt->statement.let;
+
+	token_destroy(&let_stmt.token);
+	let_stmt.name.destroy(&let_stmt.name);
+	//let_stmt.value.destroy(&let_stmt.value);
 	free(stmt);
 }
+
+void
+ast_statement_destroy (void *data) {
+	statement_t *stmt = (statement_t *) data;
+	stmt->destroy(stmt);	
+}
+
+// ======== EXPRESSION METHODS ========
 
 char *
 ast_expr_ident_token_literal (expression_t *expr) {
@@ -69,11 +72,18 @@ ast_identifier_create (token_t token) {
 	return expr;
 }
 
-void
-ast_statement_destroy (void *data) {
-	statement_t *stmt = (statement_t *) data;
-	stmt->destroy(stmt);	
+// ======== PROGRAM FUNCTIONS =========
+
+char *
+ast_program_token_literal (program_t *p) {
+	if (! ll_is_empty(p->statements)) {
+		statement_t *stmt = (statement_t *) p->statements->data;
+		return stmt->token_literal(stmt);
+	}
+	
+	return "";
 }
+
 
 program_t *
 ast_program_create () {
@@ -90,6 +100,7 @@ ast_program_create () {
 void
 ast_program_destroy (program_t *program) {
 	ll_destroy(&program->statements, ast_statement_destroy);
+	free(program);
 }
 
 

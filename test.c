@@ -20,6 +20,11 @@ main () {
 	test_let_statements();
 }
 
+// strcmp() kept returning a "__strcmp_sse2_unalligned",
+// which is something to do with the vendor's strcmp 
+// implementation about accessing the memory.
+//
+// this works.
 bool
 string_compare (const char *str, const char *to) {
 	if (strlen(str) != strlen(to)) {
@@ -37,7 +42,6 @@ string_compare (const char *str, const char *to) {
 
 bool
 test_let_statement (statement_t *stmt, char *expected_identifier) {
-
 	if (stmt->type != STATEMENT_LET) {
 		printf("ERROR: stmt->type not STATEMENT_LET. got '%d'\n", stmt->type);
 		return false;
@@ -112,10 +116,7 @@ let foobar = 838383;";
 
 free_resources:
 	ast_program_destroy(program);
-	//parser_destroy_program(program); /* ll_destroy()? */
-	free(parser);
-	lexer_destroy(lexer);
-	free(program);
+	parser_destroy(parser, NULL);
 
 	if (passed == false) {
 		printf("Test 'let_statements' has failed!\n");
@@ -266,5 +267,5 @@ if (5 < 10) {\
 		printf("Test 'token' has passed!\n");
 	}
 
-	lexer_destroy(lexer);
+	lexer_destroy(lexer, NULL);
 }

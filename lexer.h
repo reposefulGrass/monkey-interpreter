@@ -14,7 +14,7 @@ typedef struct {
 
 
 lexer_t    *lexer_create 		(char *input);
-void		lexer_destroy 		(lexer_t *l);
+void		lexer_destroy 		(lexer_t *l, void (*p_func)());
 void 		lexer_read_char 	(lexer_t *l);
 token_t		lexer_next_token 	(lexer_t *l);
 
