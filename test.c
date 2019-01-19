@@ -20,26 +20,6 @@ main () {
 	test_let_statements();
 }
 
-// strcmp() kept returning a "__strcmp_sse2_unalligned",
-// which is something to do with the vendor's strcmp 
-// implementation about accessing the memory.
-//
-// this works.
-bool
-string_compare (const char *str, const char *to) {
-	if (strlen(str) != strlen(to)) {
-		return false;
-	}
-
-	for (; str && to; str++, to++) {
-		if (*str != *to) {
-			return false;
-		}
-	}
-
-	return true;
-}
-
 bool
 test_let_statement (statement_t *stmt, char *expected_identifier) {
 	if (stmt->type != STATEMENT_LET) {
@@ -57,12 +37,12 @@ test_let_statement (statement_t *stmt, char *expected_identifier) {
 
 	statement_let_t let_stmt = stmt->statement.let;
 
-	char *literal = let_stmt.name.token_literal(&let_stmt.name);	
-	if (string_compare(literal, expected_identifier)) {
+	char *identifier = let_stmt.name.token_literal(&let_stmt.name);	
+	if (strcmp(identifier, expected_identifier)) {
 		printf(
 			"ERROR: let_stmt->name.token.literal not '%s'. got '%s'.\n",
 			expected_identifier,
-			let_stmt.name.token_literal(&let_stmt.name)
+			identifier
 		);
 		return false;
 	}
@@ -72,10 +52,11 @@ test_let_statement (statement_t *stmt, char *expected_identifier) {
 
 void
 test_let_statements() {
-	char *input = "\
-let x = 5;\
-let y = 10;\
-let foobar = 838383;";
+	char *input_raw = 
+		"let x = 5;\n"
+		"let y = 10;\n"
+		"let foobar = 838383;\n";
+	char *input = strdup(input_raw);
 
 	bool passed = true;
 
@@ -83,6 +64,10 @@ let foobar = 838383;";
 	parser_t *parser = parser_create(lexer);
 
 	program_t *program = parser_parse_program(parser);
+	if (parser_check_errors(parser)) {
+		passed = false;
+		goto free_resources;
+	}
 
 	if (program == NULL) {
 		passed = false;
@@ -116,7 +101,7 @@ let foobar = 838383;";
 
 free_resources:
 	ast_program_destroy(program);
-	parser_destroy(parser, NULL);
+	parser_destroy(parser);
 
 	if (passed == false) {
 		printf("Test 'let_statements' has failed!\n");
@@ -128,106 +113,106 @@ free_resources:
 
 void 
 test_token () {
-	char *input = "\
-let five = 5;\
-let ten = 10;\
-\
-let add = fn(x, y) {\
-	x + y;\
-};\
-\
-let result = add(five, ten);\
-\
-!-/*5;\
-5 < 10 > 5;\
-\
-if (5 < 10) {\
-	return true;\
-} else {\
-	return false;\
-}\
-\
-10 == 10;\
-10 != 9;\
-";
+	char *input_raw = 
+		"let five = 5;\n"
+		"let ten = 10;\n"
+		"\n"	
+		"let add = fn(x, y) {\n"
+		"    x + y;\n"
+		"};\n"
+		"\n"
+		"let result = add(five, ten);\n"
+		"\n"
+		"!-/*5;\n"
+		"5 < 10 > 5;\n"
+		"\n"
+		"if (5 < 10) {\n"
+		"    return true;\n"
+		"} else {\n"
+		"    return false;\n"
+		"}\n"
+		"\n"
+		"10 == 10;\n"
+		"10 != 9;\n";
+	char *input = strdup(input_raw);
 
 	bool passed = true;
 
 	token_t tests[] = {
-		{TOKEN_LET, "let"},
-		{TOKEN_IDENT, "five"},
-		{TOKEN_ASSIGN, "="},
-		{TOKEN_INT, "5"},
-		{TOKEN_SEMICOLON, ";"},
-		{TOKEN_LET, "let"},
-		{TOKEN_IDENT, "ten"},
-		{TOKEN_ASSIGN, "="},
-		{TOKEN_INT, "10"},
-		{TOKEN_SEMICOLON, ";"},
-		{TOKEN_LET, "let"},
-		{TOKEN_IDENT, "add"},
-		{TOKEN_ASSIGN, "="},
-		{TOKEN_FUNCTION, "fn"},
-		{TOKEN_LPAREN, "("},
-		{TOKEN_IDENT, "x"},
-		{TOKEN_COMMA, ","},
-		{TOKEN_IDENT, "y"},
-		{TOKEN_RPAREN, ")"},
-		{TOKEN_LBRACE, "{"},
-		{TOKEN_IDENT, "x"},
-		{TOKEN_PLUS, "+"},
-		{TOKEN_IDENT, "y"},
-		{TOKEN_SEMICOLON, ";"},
-		{TOKEN_RBRACE, "}"},
-		{TOKEN_SEMICOLON, ";"},
-		{TOKEN_LET, "let"},
-		{TOKEN_IDENT, "result"},
-		{TOKEN_ASSIGN, "="},
-		{TOKEN_IDENT, "add"},
-		{TOKEN_LPAREN, "("},
-		{TOKEN_IDENT, "five"},
-		{TOKEN_COMMA, ","},
-		{TOKEN_IDENT, "ten"},
-		{TOKEN_RPAREN, ")"},
-		{TOKEN_SEMICOLON, ";"},
-		{TOKEN_BANG, "!"},
-		{TOKEN_MINUS, "-"},
-		{TOKEN_SLASH, "/"},
-		{TOKEN_ASTERISK, "*"},
-		{TOKEN_INT, "5"},
-		{TOKEN_SEMICOLON, ";"},
-		{TOKEN_INT, "5"},
-		{TOKEN_LT, "<"},
-		{TOKEN_INT, "10"},
-		{TOKEN_GT, ">"},
-		{TOKEN_INT, "5"},
-		{TOKEN_SEMICOLON, ";"},
-		{TOKEN_IF, "if"},
-		{TOKEN_LPAREN, "("},
-		{TOKEN_INT, "5"},
-		{TOKEN_LT, "<"},
-		{TOKEN_INT, "10"},
-		{TOKEN_RPAREN, ")"},
-		{TOKEN_LBRACE, "{"},
-		{TOKEN_RETURN, "return"},
-		{TOKEN_TRUE, "true"},
-		{TOKEN_SEMICOLON, ";"},
-		{TOKEN_RBRACE, "}"},
-		{TOKEN_ELSE, "else"},
-		{TOKEN_LBRACE, "{"},
-		{TOKEN_RETURN, "return"},
-		{TOKEN_FALSE, "false"},
-		{TOKEN_SEMICOLON, ";"},
-		{TOKEN_RBRACE, "}"},
-		{TOKEN_INT, "10"},
-		{TOKEN_EQ, "=="},
-		{TOKEN_INT, "10"},
-		{TOKEN_SEMICOLON, ";"},
-		{TOKEN_INT, "10"},
-		{TOKEN_NEQ, "!="},
-		{TOKEN_INT, "9"},
-		{TOKEN_SEMICOLON, ";"},
-		{TOKEN_EOF, ""},
+		{TOKEN_LET, "let", 0},
+		{TOKEN_IDENT, "five", 4},
+		{TOKEN_ASSIGN, "=", 9},
+		{TOKEN_INT, "5", 11},
+		{TOKEN_SEMICOLON, ";", 12},
+		{TOKEN_LET, "let", 0},
+		{TOKEN_IDENT, "ten", 4},
+		{TOKEN_ASSIGN, "=", 8},
+		{TOKEN_INT, "10", 10},
+		{TOKEN_SEMICOLON, ";", 12},
+		{TOKEN_LET, "let", 0},
+		{TOKEN_IDENT, "add", 4},
+		{TOKEN_ASSIGN, "=", 8},
+		{TOKEN_FUNCTION, "fn", 10},
+		{TOKEN_LPAREN, "(", 12},
+		{TOKEN_IDENT, "x", 13},
+		{TOKEN_COMMA, ",", 14},
+		{TOKEN_IDENT, "y", 16},
+		{TOKEN_RPAREN, ")", 17},
+		{TOKEN_LBRACE, "{", 19},
+		{TOKEN_IDENT, "x", 4},
+		{TOKEN_PLUS, "+", 6},
+		{TOKEN_IDENT, "y", 8},
+		{TOKEN_SEMICOLON, ";", 9},
+		{TOKEN_RBRACE, "}", 0},
+		{TOKEN_SEMICOLON, ";", 1},
+		{TOKEN_LET, "let", 0},
+		{TOKEN_IDENT, "result", 4},
+		{TOKEN_ASSIGN, "=", 11},
+		{TOKEN_IDENT, "add", 13},
+		{TOKEN_LPAREN, "(", 16},
+		{TOKEN_IDENT, "five", 17},
+		{TOKEN_COMMA, ",", 21},
+		{TOKEN_IDENT, "ten", 23},
+		{TOKEN_RPAREN, ")", 26},
+		{TOKEN_SEMICOLON, ";", 27},
+		{TOKEN_BANG, "!", 0},
+		{TOKEN_MINUS, "-", 1},
+		{TOKEN_SLASH, "/", 2},
+		{TOKEN_ASTERISK, "*", 3},
+		{TOKEN_INT, "5", 4},
+		{TOKEN_SEMICOLON, ";", 5},
+		{TOKEN_INT, "5", 0},
+		{TOKEN_LT, "<", 2},
+		{TOKEN_INT, "10", 4},
+		{TOKEN_GT, ">", 7},
+		{TOKEN_INT, "5", 9},
+		{TOKEN_SEMICOLON, ";", 10},
+		{TOKEN_IF, "if", 0},
+		{TOKEN_LPAREN, "(", 3},
+		{TOKEN_INT, "5", 4},
+		{TOKEN_LT, "<", 6},
+		{TOKEN_INT, "10", 8},
+		{TOKEN_RPAREN, ")", 10},
+		{TOKEN_LBRACE, "{", 12},
+		{TOKEN_RETURN, "return", 4},
+		{TOKEN_TRUE, "true", 11},
+		{TOKEN_SEMICOLON, ";", 15},
+		{TOKEN_RBRACE, "}", 0},
+		{TOKEN_ELSE, "else", 2},
+		{TOKEN_LBRACE, "{", 7},
+		{TOKEN_RETURN, "return", 4},
+		{TOKEN_FALSE, "false", 11},
+		{TOKEN_SEMICOLON, ";", 16},
+		{TOKEN_RBRACE, "}", 0},
+		{TOKEN_INT, "10", 0},
+		{TOKEN_EQ, "==", 3},
+		{TOKEN_INT, "10", 6},
+		{TOKEN_SEMICOLON, ";", 8},
+		{TOKEN_INT, "10", 0},
+		{TOKEN_NEQ, "!=", 3},
+		{TOKEN_INT, "9", 6},
+		{TOKEN_SEMICOLON, ";", 7},
+		{TOKEN_EOF, "", 0},
 	};
 
 	lexer_t *lexer = lexer_create(input);
@@ -257,6 +242,16 @@ if (5 < 10) {\
 			);
 		}
 
+		if (token.position != expected.position) {
+			passed = false;
+			printf(
+				"tests[%d] | position wrong. expected position '%d', got '%d'\n", 
+				index,
+				expected.position,
+				token.position
+			);
+		}
+
 		token_destroy(&token);
 	}
 
@@ -267,5 +262,5 @@ if (5 < 10) {\
 		printf("Test 'token' has passed!\n");
 	}
 
-	lexer_destroy(lexer, NULL);
+	lexer_destroy(lexer);
 }

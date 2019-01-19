@@ -43,13 +43,16 @@ typedef enum {
 } tokentype_t;
 
 typedef struct {
-	tokentype_t type;
-	char *literal;	
+	tokentype_t type;		
+	char *literal;		
+
+	// the position relative to the current line of the token
+	unsigned int position;	
 } token_t;
 
 
 char 	   *token_name 			(tokentype_t type);
-token_t 	token_create 		(tokentype_t type, char *ch); 
+token_t 	token_create 		(tokentype_t type, char *ch, int pos); 
 void 		token_destroy 		(token_t *token);
 token_t		token_dup			(token_t token);
 tokentype_t token_lookup_ident 	(char *identifier);

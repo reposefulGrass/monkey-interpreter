@@ -2,7 +2,14 @@
 #ifndef LEXER_H
 #define LEXER_H
 
+#include <stdlib.h>
 #include "token.h"
+
+#define CHECK_LEXER_NULL(l)						\
+	if ((l) == NULL) {							\
+		printf("Lexer is uninitialized!\n");	\
+		exit(EXIT_FAILURE);						\
+	}
 
 typedef struct {
 	char *input;	// the source code to lex
@@ -10,11 +17,13 @@ typedef struct {
 	int pos;		// the position of 'ch' in 'input'
 	int read_pos;	// the position of the next char to read
 	char ch;		// the current char being looked at
+	int curr_line;	// the line number the lexer is on
+	int nth_char; 	// the nth char on the current line
 } lexer_t;
 
 
 lexer_t    *lexer_create 		(char *input);
-void		lexer_destroy 		(lexer_t *l, void (*p_func)());
+void		lexer_destroy 		(lexer_t *l);
 void 		lexer_read_char 	(lexer_t *l);
 token_t		lexer_next_token 	(lexer_t *l);
 

@@ -39,12 +39,13 @@ token_name (tokentype_t token) {
 	return token_names[token];
 }
 
-/* WARNING: must be destroyed with 'token_destroy()' */
+// destroy with 'token_destroy()'
 token_t
-token_create (tokentype_t type, char *ch) {
+token_create (tokentype_t type, char *ch, int pos) {
 	token_t token = {
 		.type = type,
 		.literal = strdup(ch),
+		.position = pos,
 	};
 
 	return token;
@@ -63,6 +64,7 @@ token_dup (token_t token) {
 	token_t t;
 	t.type = token.type;
 	t.literal = strdup(token.literal);
+	t.position = token.position;
 
 	return t;
 }

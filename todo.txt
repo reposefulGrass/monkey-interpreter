@@ -1,5 +1,7 @@
 
-	Contemplate seperating statement_t into its own source and header file with corresponding
-functions for allocating and freeing statements
+	Contemplate seperating statement_t into its own source and header 
+file with corresponding functions for allocating and freeing statements
+
+	Add line information inside token_t, and add functionality to project.
 
 
