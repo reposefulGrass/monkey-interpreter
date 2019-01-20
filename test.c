@@ -53,9 +53,9 @@ test_let_statement (statement_t *stmt, char *expected_identifier) {
 void
 test_let_statements() {
 	char *input_raw = 
-		"let x = 5;\n"
-		"let y = 10;\n"
-		"let foobar = 838383;\n";
+		"let x 5;\n"
+		"let = 10;\n"
+		"let 838383;\n";
 	char *input = strdup(input_raw);
 
 	bool passed = true;

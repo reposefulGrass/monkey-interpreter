@@ -137,92 +137,95 @@ lexer_next_token (lexer_t *l) {
 		case '=':
 			if (lexer_peek_char(l) == '=') {
 				lexer_read_char(l);
-				tok = token_create(TOKEN_EQ, "==", l->nth_char - 1);
+				tok = token_create(TOKEN_EQ, "==", l->nth_char - 1, l->curr_line);
 			}		
 			else {
-				tok = token_create(TOKEN_ASSIGN, "=", l->nth_char);
+				tok = token_create(TOKEN_ASSIGN, "=", l->nth_char, l->curr_line);
 			}
 			break;
 
 		case '+':
-			tok = token_create(TOKEN_PLUS, "+", l->nth_char);
+			tok = token_create(TOKEN_PLUS, "+", l->nth_char, l->curr_line);
 			break;
 
 		case '-':
-			tok = token_create(TOKEN_MINUS, "-", l->nth_char);
+			tok = token_create(TOKEN_MINUS, "-", l->nth_char, l->curr_line);
 			break;
 
 		case '!':
 			if (lexer_peek_char(l) == '=') {
 				lexer_read_char(l);
-				tok = token_create(TOKEN_NEQ, "!=", l->nth_char - 1);
+				tok = token_create(TOKEN_NEQ, "!=", l->nth_char - 1, l->curr_line);
 			}
 			else {
-				tok = token_create(TOKEN_BANG, "!", l->nth_char);
+				tok = token_create(TOKEN_BANG, "!", l->nth_char, l->curr_line);
 			}
 			break;
 
 		case '/':
-			tok = token_create(TOKEN_SLASH, "/", l->nth_char);
+			tok = token_create(TOKEN_SLASH, "/", l->nth_char, l->curr_line);
 			break;
 
 		case '*':
-			tok = token_create(TOKEN_ASTERISK, "*", l->nth_char);
+			tok = token_create(TOKEN_ASTERISK, "*", l->nth_char, l->curr_line);
 			break;
 
 		case '<':
-			tok = token_create(TOKEN_LT, "<", l->nth_char);
+			tok = token_create(TOKEN_LT, "<", l->nth_char, l->curr_line);
 			break;
 
 		case '>':
-			tok = token_create(TOKEN_GT, ">", l->nth_char);
+			tok = token_create(TOKEN_GT, ">", l->nth_char, l->curr_line);
 			break;
 
 		case ';':
-			tok = token_create(TOKEN_SEMICOLON, ";", l->nth_char);
+			tok = token_create(TOKEN_SEMICOLON, ";", l->nth_char, l->curr_line);
 		break;
 
 		case ',':
-			tok = token_create(TOKEN_COMMA, ",", l->nth_char);
+			tok = token_create(TOKEN_COMMA, ",", l->nth_char, l->curr_line);
 		break;
 
 		case '(':
-			tok = token_create(TOKEN_LPAREN, "(", l->nth_char);
+			tok = token_create(TOKEN_LPAREN, "(", l->nth_char, l->curr_line);
 		break;	  
 
 		case ')':
-			tok = token_create(TOKEN_RPAREN, ")", l->nth_char);
+			tok = token_create(TOKEN_RPAREN, ")", l->nth_char, l->curr_line);
 		break;
 
 		case '{':
-			tok = token_create(TOKEN_LBRACE, "{", l->nth_char);
+			tok = token_create(TOKEN_LBRACE, "{", l->nth_char, l->curr_line);
 		break;
 
 		case '}':
-			tok = token_create(TOKEN_RBRACE, "}", l->nth_char);
+			tok = token_create(TOKEN_RBRACE, "}", l->nth_char, l->curr_line);
 		break;
 
 		case '\0':
 			tok.type = TOKEN_EOF;
 			tok.literal = ""; /* "" (EMPTY) */
 			tok.position = 0;
+			tok.line = l->curr_line;
 		break;
 
 		default:
 			if (is_letter(l->ch)) {
+				tok.line = l->curr_line;
 				tok.position = l->nth_char;
 				tok.literal = lexer_read_identifier(l);				
 				tok.type = token_lookup_ident(tok.literal);
 				return tok;
 			}
 			else if (is_digit(l->ch)) {
+				tok.line = l->curr_line;
 				tok.position = l->nth_char;
 				tok.type = TOKEN_INT;
 				tok.literal = lexer_read_number(l);
 				return tok;
 			}
 			else {
-				tok = token_create(TOKEN_ILLEGAL, &l->ch, l->nth_char);
+				tok = token_create(TOKEN_ILLEGAL, &l->ch, l->nth_char, l->curr_line);
 			}
 		break;
 	}

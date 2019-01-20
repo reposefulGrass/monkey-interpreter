@@ -50,7 +50,6 @@ parser_next_token (parser_t *p) {
 	p->peek_token = lexer_next_token(p->lexer);
 }
 
-// return a linked list of statements
 program_t *
 parser_parse_program (parser_t *p) {
 	CHECK_PARSER_NULL(p);
@@ -75,6 +74,9 @@ parser_parse_statement (parser_t *p) {
 	switch (p->current_token.type) {
 		case TOKEN_LET:
 			return parser_parse_statement_let(p);
+
+		case TOKEN_RETURN:
+			
 
 		default:
 			return NULL;
@@ -152,8 +154,8 @@ parser_peek_error (parser_t *p, tokentype_t type) {
 
 	sprintf(
 		error,
-		"Error at " YELLOW "|%d:%d| " RESET "Expected next token to be " GREEN "'%s'" RESET ", got " RED "'%s'" RESET " instead.",
-		p->lexer->curr_line,
+		"Error at " YELLOW "|%d:%d| " RESET "Expected token to be " GREEN "'%s'" RESET ", got " RED "'%s'" RESET " instead.",
+		p->peek_token.line,
 		p->peek_token.position,
 		token_name(type), 
 		token_name(p->peek_token.type)

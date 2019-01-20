@@ -41,11 +41,12 @@ token_name (tokentype_t token) {
 
 // destroy with 'token_destroy()'
 token_t
-token_create (tokentype_t type, char *ch, int pos) {
+token_create (tokentype_t type, char *ch, unsigned int pos, unsigned int line) {
 	token_t token = {
 		.type = type,
 		.literal = strdup(ch),
 		.position = pos,
+		.line = line
 	};
 
 	return token;

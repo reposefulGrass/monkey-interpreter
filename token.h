@@ -46,13 +46,16 @@ typedef struct {
 	tokentype_t type;		
 	char *literal;		
 
+	// the current line that the token is on
+	unsigned int line;
+
 	// the position relative to the current line of the token
 	unsigned int position;	
 } token_t;
 
 
 char 	   *token_name 			(tokentype_t type);
-token_t 	token_create 		(tokentype_t type, char *ch, int pos); 
+token_t 	token_create 		(tokentype_t type, char *ch, unsigned int pos, unsigned int line); 
 void 		token_destroy 		(token_t *token);
 token_t		token_dup			(token_t token);
 tokentype_t token_lookup_ident 	(char *identifier);
