@@ -150,15 +150,29 @@ void
 parser_peek_error (parser_t *p, tokentype_t type) {
 	CHECK_PARSER_NULL(p);	
 
-	char *error = (char *) malloc(sizeof(char) * MAX_ERROR_SIZE);
+	char *curr_type = token_name(type);
+	char *peek_type = token_name(p->peek_token.type);
 
-	sprintf(
+	char *error_msg = 
+		"Error at " YELLOW "|%d:%d| " RESET 
+		"Expected token to be " GREEN "'%s'" RESET ", got " RED "'%s'" RESET " instead.";
+
+	int error_msg_len = 
+		strlen(curr_type) +
+		strlen(peek_type) + 
+		strlen(error_msg) - (4 * 2) +	// 2 * strlen("%d") + 2 * strlen("%s")
+		2 * 10 + 1;						// 2 * size of a maximum integer + NULL
+
+	char *error = (char *) malloc(sizeof(char) * error_msg_len);
+
+	snprintf(
 		error,
-		"Error at " YELLOW "|%d:%d| " RESET "Expected token to be " GREEN "'%s'" RESET ", got " RED "'%s'" RESET " instead.",
+		error_msg_len,
+		error_msg,
 		p->peek_token.line,
 		p->peek_token.position,
-		token_name(type), 
-		token_name(p->peek_token.type)
+		curr_type,
+		peek_type
 	);
 
 	ll_append(&p->errors, error);
