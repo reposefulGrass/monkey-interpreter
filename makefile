@@ -1,6 +1,6 @@
 
-HEADERS = token.h lexer.h ast.h parser.h
-LIBS = token.o lexer.o ast.o parser.o
+HEADERS = token.h lexer.h ast.h parser.h statement.h expression.h
+LIBS = token.o lexer.o ast.o parser.o statement.o expression.o
 DEPS = linked_list/linked_list.o
 FLAGS = -Wall -g
 MAKE_FLAGS = --no-print-directory
@@ -22,6 +22,14 @@ token.o : token.c token.h
 lexer.o : lexer.c lexer.h token.h
 	@echo 'Compiling [lexer.c]'
 	@gcc lexer.c -c $(FLAGS)
+
+statement.o : statement.c statement.h
+	@echo 'Compiling [statement.c]'
+	@gcc statement.c -c $(FLAGS)
+
+expression.o : expression.c expression.h
+	@echo 'Compiling [expression.c]'
+	@gcc expression.c -c $(FLAGS)
 
 ast.o : ast.c ast.h
 	@echo 'Compiling [ast.c]'

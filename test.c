@@ -9,6 +9,8 @@
 #include "lexer.h"
 #include "parser.h"
 #include "ast.h"
+#include "statement.h"
+#include "expression.h"
 
 
 void test_token ();
@@ -37,7 +39,7 @@ test_let_statement (statement_t *stmt, char *expected_identifier) {
 
 	statement_let_t let_stmt = stmt->statement.let;
 
-	char *identifier = let_stmt.name.token_literal(&let_stmt.name);	
+	char *identifier = let_stmt.name->token_literal(let_stmt.name);	
 	if (strcmp(identifier, expected_identifier)) {
 		printf(
 			"ERROR: let_stmt->name.token.literal not '%s'. got '%s'.\n",

@@ -7,6 +7,7 @@
 #include "token.h"
 #include "lexer.h"
 #include "ast.h"
+#include "statement.h"
 #include "parser.h"
 
 
@@ -76,7 +77,6 @@ parser_parse_statement (parser_t *p) {
 			return parser_parse_statement_let(p);
 
 		case TOKEN_RETURN:
-			
 
 		default:
 			return NULL;
@@ -88,6 +88,27 @@ statement_t *
 parser_parse_statement_let (parser_t *p) {
 	CHECK_PARSER_NULL(p);
 
+    token_t let_token = p->current_token;
+    token_t ident_token = p->peek_token;
+
+    if (!parser_expect_peek(p, TOKEN_IDENT) || !parser_expect_peek(p, TOKEN_IDENT)) {
+        return NULL;
+    }
+
+    expression_t *identifier = expression_identifier_create(ident_token); 
+
+    // temporarily skip value
+	while (!parser_current_token_is(p, TOKEN_SEMICOLON)) {
+		parser_next_token(p);
+	}
+
+    expression_t *value = NULL;
+
+    statement_t *stmt = statement_let_create(let_token, identifier, value);
+
+    return stmt;
+
+    /* TODO: TO BE DESTROYED 
 	statement_t *stmt = (statement_t *) malloc(sizeof(statement_t));
 	stmt->type = STATEMENT_LET;
 	stmt->statement.let.token = token_dup(p->current_token);
@@ -116,6 +137,7 @@ parser_parse_statement_let (parser_t *p) {
 	}
 
 	return stmt;
+    */
 }
 
 
