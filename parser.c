@@ -77,6 +77,7 @@ parser_parse_statement (parser_t *p) {
 			return parser_parse_statement_let(p);
 
 		case TOKEN_RETURN:
+            return parser_parse_statement_return(p);
 
 		default:
 			return NULL;
@@ -88,10 +89,10 @@ statement_t *
 parser_parse_statement_let (parser_t *p) {
 	CHECK_PARSER_NULL(p);
 
-    token_t let_token = p->current_token;
-    token_t ident_token = p->peek_token;
+    token_t let_token = token_dup(p->current_token);
+    token_t ident_token = token_dup(p->peek_token);
 
-    if (!parser_expect_peek(p, TOKEN_IDENT) || !parser_expect_peek(p, TOKEN_IDENT)) {
+    if (!parser_expect_peek(p, TOKEN_IDENT) || !parser_expect_peek(p, TOKEN_ASSIGN)) {
         return NULL;
     }
 
@@ -104,40 +105,24 @@ parser_parse_statement_let (parser_t *p) {
 
     expression_t *value = NULL;
 
-    statement_t *stmt = statement_let_create(let_token, identifier, value);
+    return statement_let_create(let_token, identifier, value);
+}
 
-    return stmt;
 
-    /* TODO: TO BE DESTROYED 
-	statement_t *stmt = (statement_t *) malloc(sizeof(statement_t));
-	stmt->type = STATEMENT_LET;
-	stmt->statement.let.token = token_dup(p->current_token);
-	stmt->token_literal = ast_stmt_let_token_literal;
-	stmt->destroy = ast_stmt_let_destroy;
+statement_t *
+parser_parse_statement_return (parser_t *p) {
+    CHECK_PARSER_NULL(p);
 
-	statement_let_t *let_stmt = &stmt->statement.let;
+    token_t return_token = token_dup(p->current_token);    
 
-	if (!parser_expect_peek(p, TOKEN_IDENT)) {
-		token_destroy(&let_stmt->token);
-		free(stmt);
-		return NULL;
-	}
+    // temporarily skip value
+    while (!parser_current_token_is(p, TOKEN_SEMICOLON)) {
+        parser_next_token(p);
+    }
 
-	let_stmt->name = ast_identifier_create(p->current_token);
+    expression_t *value = NULL;
 
-	if (!parser_expect_peek(p, TOKEN_ASSIGN)) {
-		ast_expr_ident_destroy(&let_stmt->name);
-		token_destroy(&let_stmt->token);
-		free(stmt);
-		return NULL;
-	}	
-
-	while (!parser_current_token_is(p, TOKEN_SEMICOLON)) {
-		parser_next_token(p);
-	}
-
-	return stmt;
-    */
+    return statement_return_create(return_token, value);
 }
 
 
