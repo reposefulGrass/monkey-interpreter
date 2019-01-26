@@ -21,11 +21,13 @@ typedef struct expression_t {
 	} expression;
 
 	char *  (*token_literal)    (struct expression_t *expr);
+    char *  (*string)           (struct expression_t *expr);
 	void    (*destroy)          (struct expression_t *expr);
 } expression_t;
 
 expression_t *  expression_identifier_create        (token_t token);
 char *          expression_identifier_token_literal (expression_t *expr);
+char *          expression_identifier_string        (expression_t *expr);
 void            expression_identifier_destroy	    (expression_t *expr);
 
 

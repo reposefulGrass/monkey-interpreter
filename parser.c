@@ -15,12 +15,11 @@ parser_t *
 parser_create (lexer_t *l) {
 	parser_t *p = (parser_t *) malloc(sizeof(parser_t));
 	if (p == NULL) {
-		printf("Failed to initilize parser!");	
+		printf("ERROR in 'parser_create': Failed to initilize parser!");	
 		exit(EXIT_FAILURE);
 	}	
 
 	p->lexer = l;
-	// TODO: change to TOKEN_NULL?
 	p->current_token = (token_t) {.type = TOKEN_EOF, .literal = ""};
 	p->peek_token = (token_t) {.type = TOKEN_EOF, .literal = ""};
 	ll_initialize(&p->errors);
@@ -34,8 +33,6 @@ parser_create (lexer_t *l) {
 
 void
 parser_destroy (parser_t *p) {
-	CHECK_PARSER_NULL(p);
-
 	ll_destroy(&p->errors, free);
 	lexer_destroy(p->lexer);
 	free(p);
@@ -43,8 +40,6 @@ parser_destroy (parser_t *p) {
 
 void 
 parser_next_token (parser_t *p) {
-	CHECK_PARSER_NULL(p);
-
 	token_destroy(&p->current_token);
 
 	p->current_token = p->peek_token;
@@ -53,8 +48,6 @@ parser_next_token (parser_t *p) {
 
 program_t *
 parser_parse_program (parser_t *p) {
-	CHECK_PARSER_NULL(p);
-
 	program_t *program = ast_program_create();
 
 	while (p->current_token.type != TOKEN_EOF) {
@@ -70,8 +63,6 @@ parser_parse_program (parser_t *p) {
 
 statement_t *
 parser_parse_statement (parser_t *p) {
-	CHECK_PARSER_NULL(p);
-
 	switch (p->current_token.type) {
 		case TOKEN_LET:
 			return parser_parse_statement_let(p);
@@ -87,8 +78,6 @@ parser_parse_statement (parser_t *p) {
 
 statement_t *
 parser_parse_statement_let (parser_t *p) {
-	CHECK_PARSER_NULL(p);
-
     token_t let_token = token_dup(p->current_token);
     token_t ident_token = token_dup(p->peek_token);
 
@@ -111,8 +100,6 @@ parser_parse_statement_let (parser_t *p) {
 
 statement_t *
 parser_parse_statement_return (parser_t *p) {
-    CHECK_PARSER_NULL(p);
-
     token_t return_token = token_dup(p->current_token);    
 
     // temporarily skip value
@@ -128,22 +115,18 @@ parser_parse_statement_return (parser_t *p) {
 
 bool
 parser_current_token_is (parser_t *p, tokentype_t type) {
-	CHECK_PARSER_NULL(p);	
 	return p->current_token.type == type;
 }
 
 
 bool
 parser_peek_token_is (parser_t *p, tokentype_t type) {
-	CHECK_PARSER_NULL(p);	
 	return p->peek_token.type == type;
 }
 
 
 bool
 parser_expect_peek (parser_t *p, tokentype_t type) {
-	CHECK_PARSER_NULL(p);	
-
 	if (parser_peek_token_is(p, type)) {
 		parser_next_token(p);		
 		return true;
@@ -155,8 +138,6 @@ parser_expect_peek (parser_t *p, tokentype_t type) {
 
 void
 parser_peek_error (parser_t *p, tokentype_t type) {
-	CHECK_PARSER_NULL(p);	
-
 	char *curr_type = token_name(type);
 	char *peek_type = token_name(p->peek_token.type);
 
@@ -176,6 +157,7 @@ parser_peek_error (parser_t *p, tokentype_t type) {
 		error,
 		error_msg_len,
 		error_msg,
+
 		p->peek_token.line,
 		p->peek_token.position,
 		curr_type,
@@ -188,8 +170,6 @@ parser_peek_error (parser_t *p, tokentype_t type) {
 
 bool 
 parser_check_errors	(parser_t *p) {
-	CHECK_PARSER_NULL(p);	
-
 	int errors = ll_length(p->errors);
 	if (errors == 0) {
 		return false;	

@@ -17,6 +17,7 @@ expression_identifier_create (token_t token) {
     };
 
 	expr->token_literal = expression_identifier_token_literal;
+    expr->string = expression_identifier_string;
 	expr->destroy = expression_identifier_destroy;
 
 	return expr;
@@ -24,25 +25,21 @@ expression_identifier_create (token_t token) {
 
 char *
 expression_identifier_token_literal (expression_t *expr) {
-	if (expr->type != EXPRESSION_IDENTIFIER) {
-		printf("ERROR: Expression Type is not EXPRESSION_IDENTIFIER!\n");
-		exit(EXIT_FAILURE);
-	}
-
 	identifier_t ident = expr->expression.identifier;
-
 	return ident.token.literal;
+}
+
+char *
+expression_identifier_string (expression_t *expr) {
+    return strdup(expr->expression.identifier.value);
 }
 
 void
 expression_identifier_destroy (expression_t *expr) {
-	if (expr->type != EXPRESSION_IDENTIFIER) {
-		printf("ERROR: tried to destroy a non-identifier as an identifier!\n");
-		exit(EXIT_FAILURE);
-	}
+    identifier_t ident = expr->expression.identifier;
 
-    token_destroy(&expr->expression.identifier.token);
-    free(expr->expression.identifier.value);
+    token_destroy(&ident.token);
+    free(ident.value);
     free(expr);
 }
 

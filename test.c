@@ -14,14 +14,53 @@
 
 
 void test_token ();
-void test_let_statements();
-void test_return_statements();
+void test_let_statements ();
+void test_return_statements ();
+void test_statement_string_fn ();
 
 int 
 main () {
-	test_token();
-	test_let_statements();
-    test_return_statements();
+	//test_token();
+	//test_let_statements();
+    //test_return_statements();
+    //test_statement_string_fn();
+}
+
+// whenever I can parse expression change this hardcode into input!
+void
+test_statement_string_fn () {
+    bool passed = true;
+
+    token_t token = token_create(TOKEN_LET, "let", 0, 0);
+
+    token_t identifier_token = token_create(TOKEN_IDENT, "myVar", 0, 0);
+    expression_t *identifier = expression_identifier_create(identifier_token);
+    token_destroy(&identifier_token);
+
+    token_t value_token = token_create(TOKEN_IDENT, "anotherVar", 0, 0);
+    expression_t *value = expression_identifier_create(value_token);
+    token_destroy(&value_token);
+
+    statement_t *stmt = statement_let_create(token, identifier, value);
+
+    program_t *program = ast_program_create();
+	ll_append(&program->statements, (void *) stmt);
+   
+    char *program_str = ast_program_string(program); 
+    if (strcmp(program_str, "let myVar = anotherVar;") != 0) {
+        passed = false;
+        printf("ast_program_string() is wrong. got = '%s'\n", program_str);
+    }
+    free(program_str);
+
+    ast_program_destroy(program);
+
+    if (passed == true) {
+        printf("Test 'string_fn' has passed!\n");
+    }
+    else {
+        printf("Test 'string_fn' has failed!\n");
+    }
 }
 
 void

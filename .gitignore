@@ -2,3 +2,4 @@
 *.o
 test
 monkey
+.gdb_history

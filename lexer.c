@@ -13,7 +13,7 @@ lexer_t *
 lexer_create (char *input) {
 	lexer_t *l = (lexer_t *) malloc(sizeof(lexer_t));
 	if (l == NULL) {
-		printf("Failed to allocated space for lexer!\n");
+		printf("Error in 'lexer_create': Failed to allocated space for lexer!\n");
 		exit(EXIT_FAILURE);	
 	}
 
@@ -32,15 +32,12 @@ lexer_create (char *input) {
 
 void
 lexer_destroy (lexer_t *l) {
-	CHECK_LEXER_NULL(l);
 	free(l->input);
 	free(l);
 }
 
 void 
 lexer_read_char (lexer_t *l) {
-	CHECK_LEXER_NULL(l);
-
 	if (l->read_pos >= l->length) {
 		l->ch = '\0';
 	}
@@ -65,8 +62,6 @@ is_digit (char ch) {
 
 char *
 lexer_read_identifier (lexer_t *l) {
-	CHECK_LEXER_NULL(l);
-
 	int start = l->pos;
 
 	// find the end of the identifier
@@ -82,8 +77,6 @@ lexer_read_identifier (lexer_t *l) {
 
 char *
 lexer_read_number (lexer_t *l) {
-	CHECK_LEXER_NULL(l);
-
 	int start = l->pos;
 
 	// find the end of the identifier
@@ -103,8 +96,6 @@ lexer_read_number (lexer_t *l) {
 
 void
 lexer_skip_whitespace(lexer_t *l) {
-	CHECK_LEXER_NULL(l);
-
 	while (l->ch == ' ' || l->ch == '\t' || l->ch == '\n' || l->ch == '\r') {
 		if (l->ch == '\n') {
 			l->curr_line++;
@@ -116,8 +107,6 @@ lexer_skip_whitespace(lexer_t *l) {
 
 char
 lexer_peek_char (lexer_t *l) {
-	CHECK_LEXER_NULL(l);
-
 	if (l->read_pos >= l->length) {
 		return '\0';
 	}
@@ -127,8 +116,6 @@ lexer_peek_char (lexer_t *l) {
 
 token_t 
 lexer_next_token (lexer_t *l) {
-	CHECK_LEXER_NULL(l);
-
 	token_t tok;
 
 	lexer_skip_whitespace(l);
@@ -204,7 +191,7 @@ lexer_next_token (lexer_t *l) {
 
 		case '\0':
 			tok.type = TOKEN_EOF;
-			tok.literal = ""; /* "" (EMPTY) */
+			tok.literal = ""; 
 			tok.position = 0;
 			tok.line = l->curr_line;
 		break;

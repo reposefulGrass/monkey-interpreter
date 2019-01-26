@@ -5,14 +5,9 @@
 #include <stdlib.h>
 #include "token.h"
 
-#define CHECK_LEXER_NULL(l)						\
-	if ((l) == NULL) {							\
-		printf("Lexer is uninitialized!\n");	\
-		exit(EXIT_FAILURE);						\
-	}
 
 typedef struct {
-	char *input;	// the source code to lex
+	char *input;	// the source code to lex (WARNING: must be a dynamically allocated string)
 	int length;		// the length of the source code (used in lexer_readchar)
 	int pos;		// the position of 'ch' in 'input'
 	int read_pos;	// the position of the next char to read

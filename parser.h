@@ -7,12 +7,6 @@
 
 #define MAX_ERROR_SIZE 200
 
-#define CHECK_PARSER_NULL(p)					\
-	if ((p) == NULL) { 							\
-		printf("Parser is uninitialized!\n");	\
-		exit(EXIT_FAILURE);						\
-	}											
-
 typedef struct {
 	lexer_t *lexer;
 	token_t current_token;

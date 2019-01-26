@@ -12,6 +12,6 @@ typedef struct {
 
 program_t * ast_program_create 	    ();
 void	    ast_program_destroy     (program_t *program);
-
+char *      ast_program_string      (program_t *program);
 
 #endif /* AST_H */

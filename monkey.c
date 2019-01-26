@@ -1,7 +1,7 @@
 
 #include <stdio.h>
 #include <string.h>
-#include "stdlib.h"
+#include <stdlib.h>
 
 #include "token.h"
 #include "lexer.h"
@@ -14,7 +14,11 @@ int main () {
 
 	do {
 		printf("\033[1;33m>>\033[0m ");
-		fgets(line, LINE_SIZE, stdin); 
+		char *result = fgets(line, LINE_SIZE, stdin); 
+        if (result == NULL) {
+            printf("Error: Couldn't read input!\n");
+            exit(EXIT_FAILURE);
+        }
 
 		lexer_t *l = lexer_create(line);
 
