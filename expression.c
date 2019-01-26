@@ -9,6 +9,9 @@
 expression_t *
 expression_identifier_create (token_t token) {
 	expression_t *expr = (expression_t *) malloc(sizeof(expression_t));
+    if (expr == NULL) {
+        fprintf(stderr, "ERROR in 'expression_identifier_create': Failed to allocate 'expr'!\n");
+    }
 
 	expr->type = EXPRESSION_IDENTIFIER;
 	expr->expression.identifier = (identifier_t) { 

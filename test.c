@@ -20,10 +20,10 @@ void test_statement_string_fn ();
 
 int 
 main () {
-	//test_token();
-	//test_let_statements();
-    //test_return_statements();
-    //test_statement_string_fn();
+	test_token();
+	test_let_statements();
+    test_return_statements();
+    test_statement_string_fn();
 }
 
 // whenever I can parse expression change this hardcode into input!

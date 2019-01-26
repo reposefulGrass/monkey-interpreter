@@ -15,7 +15,7 @@ parser_t *
 parser_create (lexer_t *l) {
 	parser_t *p = (parser_t *) malloc(sizeof(parser_t));
 	if (p == NULL) {
-		printf("ERROR in 'parser_create': Failed to initilize parser!");	
+		fprintf(stderr, "ERROR in 'parser_create': Failed to allocate 'parser'!");	
 		exit(EXIT_FAILURE);
 	}	
 
@@ -152,6 +152,10 @@ parser_peek_error (parser_t *p, tokentype_t type) {
 		2 * 10 + 1;						// 2 * size of a maximum integer + NULL
 
 	char *error = (char *) malloc(sizeof(char) * error_msg_len);
+    if (error == NULL) {
+        fprintf(stderr, "ERROR in 'parser_peek_error': Failed to allocate 'error'!\n");
+        exit(EXIT_FAILURE);
+    }
 
 	snprintf(
 		error,

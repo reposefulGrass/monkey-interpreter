@@ -13,7 +13,7 @@ lexer_t *
 lexer_create (char *input) {
 	lexer_t *l = (lexer_t *) malloc(sizeof(lexer_t));
 	if (l == NULL) {
-		printf("Error in 'lexer_create': Failed to allocated space for lexer!\n");
+		fprintf(stderr, "Error in 'lexer_create': Failed to allocated space for lexer!\n");
 		exit(EXIT_FAILURE);	
 	}
 

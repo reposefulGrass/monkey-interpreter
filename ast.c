@@ -10,6 +10,10 @@
 program_t *
 ast_program_create () {
 	program_t *program = (program_t *) malloc(sizeof(program_t));
+    if (program == NULL) {
+        fprintf(stderr, "ERROR in 'ast_program_create': Could not allocate 'program'!\n");
+        exit(EXIT_FAILURE);
+    }
 
 	list stmts;
 	ll_initialize(&stmts);	
@@ -45,10 +49,10 @@ ast_program_string (program_t *program) {
 
     char *buffer = (char *) malloc(sizeof(char) * num_chars + 1);
     if (buffer == NULL) {
-        printf("Error: Failed to initialize memory!");
+        fprintf(stderr, "ERROR in 'ast_program_string': Failed to allocate 'buffer'!");
         exit(EXIT_FAILURE);
     }
-    memset(buffer, '\0', num_chars + 1);
+    buffer[0] = '\0';
 
     cursor = NULL;
     while ((cursor = ll_iterator(stmt_strings, cursor)) != NULL) {

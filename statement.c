@@ -9,6 +9,10 @@
 statement_t *
 statement_let_create (token_t token, expression_t *identifier, expression_t *value) {
     statement_t *stmt = (statement_t *) malloc(sizeof(statement_t));
+    if (stmt == NULL) {
+        fprintf(stderr, "ERROR in 'statement_let_create': Failed to allocate 'stmt'!\n");
+        exit(EXIT_FAILURE);
+    }
 
     stmt->type = STATEMENT_LET;
     stmt->statement.let = (statement_let_t) {
@@ -84,6 +88,10 @@ statement_let_destroy (statement_t *stmt) {
 statement_t *
 statement_return_create (token_t token, expression_t *value) {
     statement_t *stmt = (statement_t *) malloc(sizeof(statement_t));
+    if (stmt == NULL) {
+        fprintf(stderr, "ERROR in 'statement_return_create': Failed to allocate 'stmt'!\n");
+        exit(EXIT_FAILURE);
+    }
 
     stmt->type = STATEMENT_RETURN;
     stmt->statement.ret = (statement_return_t) {
@@ -149,6 +157,10 @@ statement_return_destroy (statement_t *stmt) {
 statement_t *   
 statement_expression_create (token_t token, expression_t *value) {
     statement_t *stmt = (statement_t *) malloc(sizeof(statement_t));
+    if (stmt == NULL) {
+        fprintf(stderr, "ERROR in 'statement_expression_create': Failed to allocate 'stmt'!\n");
+        exit(EXIT_FAILURE);
+    }
 
     stmt->type = STATEMENT_EXPRESSION;
     stmt->statement.expr = (statement_expression_t) {
