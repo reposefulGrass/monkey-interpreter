@@ -2,7 +2,7 @@
 HEADERS = token.h lexer.h ast.h parser.h statement.h expression.h
 LIBS = token.o lexer.o ast.o parser.o statement.o expression.o
 DEPS = linked_list/linked_list.o
-FLAGS = -Wall -Wextra -Werror -O2 -pedantic -g
+FLAGS = -Wall -Wextra -Werror -pedantic -g
 MAKE_FLAGS = --no-print-directory
 
 monkey : monkey.c $(LIBS) $(HEADERS)

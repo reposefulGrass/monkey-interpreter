@@ -17,13 +17,82 @@ void test_token ();
 void test_let_statements ();
 void test_return_statements ();
 void test_statement_string_fn ();
+void test_identifier_expression();
 
 int 
 main () {
-	test_token();
-	test_let_statements();
-    test_return_statements();
-    test_statement_string_fn();
+	//test_token();
+	//test_let_statements();
+    //test_return_statements();
+    //test_statement_string_fn();
+    test_identifier_expression();
+}
+
+void 
+test_identifier_expression () {
+    bool passed = true;
+    char *input_raw = "foobar;";
+    char *input = strdup(input_raw);
+
+    lexer_t *lexer = lexer_create(input);
+    parser_t *parser = parser_create(lexer);
+    program_t *program = parser_parse_program(parser);
+
+	if (parser_check_errors(parser)) {
+		passed = false;
+		goto ie_free_resources;
+	}
+	if (program == NULL) {
+		passed = false;
+		printf("ERROR: Failed to initialize 'program'!\n");
+		goto ie_free_resources;
+	}
+	if (ll_length(program->statements) != 1) {
+		passed = false;
+		printf("ERROR: The number of statements is not 1!\n");
+		goto ie_free_resources;
+	}
+
+    statement_t *stmt = (statement_t *) program->statements->data;
+    if (stmt->type != STATEMENT_EXPRESSION) {
+        printf(
+            "ERROR: Statement type not STATEMENT_EXPRESSION, got '%d' instead.\n", 
+            stmt->type
+        );
+        goto ie_free_resources;
+    }
+
+    statement_expression_t expr_stmt = stmt->statement.expr;
+    expression_t *expr = expr_stmt.expr;
+    if (expr->type != EXPRESSION_IDENTIFIER) {
+        printf(
+            "ERROR: Expression type not EXPRESSION_IDENTIFIER, got '%d' instead.\n",
+            expr->type
+        );
+        goto ie_free_resources;
+    } 
+
+    identifier_t ident = expr->expression.identifier; 
+    char *expected_value = "foobar";
+    if (strcmp(ident.value, expected_value) != 0) {
+        printf(
+            "ERROR: Identifier value not '%s', got '%s' instead.\n",
+            expected_value,
+            ident.value
+        );
+        goto ie_free_resources;
+    }
+
+ie_free_resources:
+    ast_program_destroy(program);
+    parser_destroy(parser); 
+    
+    if (passed == false) {
+        printf("The test 'identifier_expression' has failed!\n");
+    }
+    else {
+        printf("The test 'identifier_expression' has passed!\n");
+    }    
 }
 
 // whenever I can parse expression change this hardcode into input!
@@ -79,19 +148,19 @@ test_return_statements() {
 	program_t *program = parser_parse_program(parser);
 	if (parser_check_errors(parser)) {
 		passed = false;
-		goto free_resources;
+		goto rs_free_resources;
 	}
 
 	if (program == NULL) {
 		passed = false;
 		printf("ERROR: Failed to initialize 'program'!\n");
-		goto free_resources;
+		goto rs_free_resources;
 	}
 
 	if (ll_length(program->statements) != 3) {
 		passed = false;
 		printf("ERROR: The number of statements is not 3!\n");
-		goto free_resources;
+		goto rs_free_resources;
 	}
 
 	list cursor = NULL;
@@ -116,7 +185,7 @@ test_return_statements() {
         }
 	}
 
-free_resources:
+rs_free_resources:
 	ast_program_destroy(program);
 	parser_destroy(parser);
 
@@ -174,19 +243,19 @@ test_let_statements() {
 	program_t *program = parser_parse_program(parser);
 	if (parser_check_errors(parser)) {
 		passed = false;
-		goto free_resources;
+		goto ls_free_resources;
 	}
 
 	if (program == NULL) {
 		passed = false;
 		printf("ERROR: Failed to initialize 'program'!\n");
-		goto free_resources;
+		goto ls_free_resources;
 	}
 
 	if (ll_length(program->statements) != 3) {
 		passed = false;
 		printf("ERROR: The number of statements is not 3!\n");
-		goto free_resources;
+		goto ls_free_resources;
 	}
 
 	char *tests[] = {
@@ -201,13 +270,13 @@ test_let_statements() {
 		statement_t *stmt = (statement_t *) cursor->data;
 		if (!test_let_statement(stmt, tests[index])) {
 			passed = false;
-			goto free_resources;
+			goto ls_free_resources;
 		}
 		
 		index++;	
 	}
 
-free_resources:
+ls_free_resources:
 	ast_program_destroy(program);
 	parser_destroy(parser);
 

@@ -25,7 +25,7 @@ typedef struct {
 
 typedef struct {
     token_t token;
-    expression_t *value;
+    expression_t *expr;
 } statement_expression_t;
 
 typedef struct statement_t {

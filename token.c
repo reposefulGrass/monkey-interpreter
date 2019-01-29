@@ -66,6 +66,7 @@ token_dup (token_t token) {
 	t.type = token.type;
 	t.literal = strdup(token.literal);
 	t.position = token.position;
+    t.line = token.line;
 
 	return t;
 }

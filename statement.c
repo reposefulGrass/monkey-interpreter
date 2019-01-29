@@ -165,7 +165,7 @@ statement_expression_create (token_t token, expression_t *value) {
     stmt->type = STATEMENT_EXPRESSION;
     stmt->statement.expr = (statement_expression_t) {
         .token = token,
-        .value = value
+        .expr = value
     };
 
     stmt->token_literal = statement_expression_token_literal;
@@ -188,8 +188,9 @@ statement_expression_string (statement_t *stmt) {
     statement_expression_t expr_stmt = stmt->statement.expr;
 
     // temporary since we havent implemented expressions yet
-    if (expr_stmt.value != NULL) {
-        return strdup(stmt->string(stmt));
+    if (expr_stmt.expr != NULL) {
+        expression_t *expr = expr_stmt.expr;
+        return strdup(expr->string(expr));
     }
 
     return NULL;

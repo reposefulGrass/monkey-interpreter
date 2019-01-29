@@ -71,7 +71,7 @@ parser_parse_statement (parser_t *p) {
             return parser_parse_statement_return(p);
 
 		default:
-			return NULL;
+            return parser_parse_statement_expression(p);
 	}
 } 
 
@@ -110,6 +110,51 @@ parser_parse_statement_return (parser_t *p) {
     expression_t *value = NULL;
 
     return statement_return_create(return_token, value);
+}
+
+
+statement_t *
+parser_parse_statement_expression (parser_t *parser) {
+    token_t expr_token = token_dup(parser->current_token);
+    expression_t *expr = parser_parse_expression(parser, PRECEDENCE_LOWEST);
+
+    if (parser_peek_token_is(parser, TOKEN_SEMICOLON)) {
+        parser_next_token(parser); 
+    }
+
+    return statement_expression_create(expr_token, expr);
+}
+
+expression_t *  
+parser_parse_expression (parser_t *parser, precedence_t precedence) {
+    fn_ptr prefix = parser_get_prefix_fn(parser->current_token.type);     
+    if (prefix == NULL) {
+        return NULL; // TODO: Add proper error handling
+    }
+
+    // filler to use parameter 'precedence'; temporary.
+    if (precedence == PRECEDENCE_LOWEST) {}
+
+    expression_t *left_expr = prefix(parser);
+    return left_expr;
+}
+
+
+fn_ptr          
+parser_get_prefix_fn (tokentype_t type) {
+    switch (type) {
+        case TOKEN_IDENT:
+            return parser_parse_expression_identifier;
+
+        default:
+            return NULL;
+    } 
+}
+
+
+expression_t *
+parser_parse_expression_identifier (parser_t *parser) {
+    return expression_identifier_create(parser->current_token);
 }
 
 
