@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "dynamic_string/dynamic_string.h"
 #include "statement.h"
 #include "token.h"
 
@@ -16,7 +17,7 @@ statement_let_create (token_t token, expression_t *identifier, expression_t *val
 
     stmt->type = STATEMENT_LET;
     stmt->statement.let = (statement_let_t) {
-        .token = token,
+        .token = token_dup(token),
         .name = identifier,
         .value = value 
     };
@@ -38,37 +39,26 @@ statement_let_token_literal (statement_t *stmt) {
 char *
 statement_let_string (statement_t *stmt) {
     statement_let_t let_stmt = stmt->statement.let;
+    ds_t *dstring = ds_initialize();
 
     char *literal = stmt->token_literal(stmt);
     char *identifier = let_stmt.name->string(let_stmt.name);
-    char *value = NULL;
+    ds_append(dstring, literal);
+    ds_append(dstring, " ");
+    ds_append(dstring, identifier);
+    ds_append(dstring, " = ");
+    free(identifier);
 
     // temporary
     if (let_stmt.value != NULL) {
-        value = let_stmt.value->string(let_stmt.value);
+        char *value = let_stmt.value->string(let_stmt.value);
+        ds_append(dstring, value);
+        free(value);
     }
+    ds_append(dstring, ";");
 
-    int length = 
-        strlen(literal) + 1 + // "let "
-        strlen(identifier) + 3 + // "identifier = " 
-        strlen(value) + 1 + 1; // "value;" & NULL
-
-    char *buffer = (char *) malloc(sizeof(char) * length);
-    if (buffer == NULL) {
-        printf("ERROR in 'statement_let_string': Failed to initialize 'buffer'!\n");
-        exit(EXIT_FAILURE);
-    }
-
-    strcpy(buffer, literal); // null-terminate buffer for strcat
-    strcat(buffer, " ");
-    strcat(buffer, identifier); 
-    strcat(buffer, " = ");
-    strcat(buffer, value);
-    strcat(buffer, ";");
-
-    free(identifier);
-    free(value);
-    return buffer;
+    char *ret_str = ds_to_string(dstring);
+    return ret_str;
 }
 
 void
@@ -95,7 +85,7 @@ statement_return_create (token_t token, expression_t *value) {
 
     stmt->type = STATEMENT_RETURN;
     stmt->statement.ret = (statement_return_t) {
-        .token = token,
+        .token = token_dup(token),
         .value = value
     };
 
@@ -117,30 +107,19 @@ statement_return_token_literal (statement_t *stmt) {
 char *
 statement_return_string (statement_t *stmt) {
     statement_return_t return_stmt = stmt->statement.ret;
+    ds_t *dstring = ds_initialize();
 
     char *literal = stmt->string(stmt);
-    char *value = NULL;
+    ds_append(dstring, literal);
 
     if (return_stmt.value != NULL) {
-        value = return_stmt.value->string(return_stmt.value);
+        char *value = return_stmt.value->string(return_stmt.value);
+        ds_append(dstring, value);    
     }
+    ds_append(dstring, ";");
 
-    int length = 
-        strlen(literal) + 1 + // "return "
-        strlen(value) + 2; // "value;" & NULL
-
-    char *buffer = (char *) malloc(sizeof(char) * length + 1);
-    if (buffer == NULL) {
-        printf("ERROR in 'statement_return_string': Failed to initialize 'buffer'!\n");
-        exit(EXIT_FAILURE);
-    }
-
-    strcpy(buffer, literal); // null-terminate buffer for strcat
-    strcat(buffer, " ");
-    strcat(buffer, value);
-    strcat(buffer, ";");
-
-    return buffer;
+    char *string = ds_to_string(dstring);
+    return string;
 }
 
 
@@ -164,7 +143,7 @@ statement_expression_create (token_t token, expression_t *value) {
 
     stmt->type = STATEMENT_EXPRESSION;
     stmt->statement.expr = (statement_expression_t) {
-        .token = token,
+        .token = token_dup(token),
         .expr = value
     };
 
@@ -201,7 +180,7 @@ void
 statement_expression_destroy (statement_t *stmt) {
     statement_expression_t expr_stmt = stmt->statement.expr;
     token_destroy(&expr_stmt.token);
-    //expr_stmt.value->destroy(expr_stmt.value);
+    expression_destroy(expr_stmt.expr);
     free(stmt);
 }
 

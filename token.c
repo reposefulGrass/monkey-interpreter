@@ -8,7 +8,7 @@ char *token_names[] = {
 	/* TOKEN_ILLEGAL 	*/ 	"<illegal>",
 	/* TOKEN_EOF 		*/	"<eof>",
 	/* TOKEN_IDENT 		*/	"<ident>",
-	/* TOKEN_INT 		*/	"<int>",
+	/* TOKEN_NUMBER 	*/	"<number>",
 	/* TOKEN_ASSIGN 	*/	"=",
 	/* TOKEN_PLUS 		*/	"+",
 	/* TOKEN_MINIS		*/ 	"-",

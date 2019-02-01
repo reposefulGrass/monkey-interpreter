@@ -7,7 +7,7 @@ typedef enum {
 	TOKEN_EOF,
 
 	TOKEN_IDENT, 
-	TOKEN_INT,
+	TOKEN_NUMBER,
 
 	/* OPERATORS */
 	TOKEN_ASSIGN, 		/*  =  */

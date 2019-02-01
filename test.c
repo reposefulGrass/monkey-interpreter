@@ -18,6 +18,8 @@ void test_let_statements ();
 void test_return_statements ();
 void test_statement_string_fn ();
 void test_identifier_expression();
+void test_number_expression();
+void test_prefix_expression();
 
 int 
 main () {
@@ -25,8 +27,199 @@ main () {
 	//test_let_statements();
     //test_return_statements();
     //test_statement_string_fn();
-    test_identifier_expression();
+    //test_identifier_expression();
+    //test_number_expression();
+    test_prefix_expression();
+
+    // TODO: Write a few macros for the common test cases
 }
+
+bool
+test_number (expression_t *expr, int expected_number) {
+    if (expr->type != EXPRESSION_NUMBER) {
+        printf(
+            "ERROR: expr->type != EXPRESSION_NUMBER, instead got '%d'!\n", 
+            expr->type
+        );
+        return false;
+    }
+
+    number_t number = expr->expression.number;    
+    if (number.value != expected_number) {
+        printf(
+            "ERROR: number.value != '%d', instead got '%d'!\n",
+            expected_number,
+            number.value
+        );
+        return false;
+    }
+
+    return true;
+}
+
+typedef struct {
+    char *input;
+    char *operator;
+    int number;
+} prefix_test_t;
+
+void
+test_prefix_expression () {
+    bool passed = true;
+
+    prefix_test_t tests[] = {
+        {"!5;", "!", 5},
+        {"-15;", "-", 15}
+    };
+
+    int size = sizeof(tests) / sizeof(prefix_test_t);
+    for (int index = 0; index < size; index++) {
+        printf("==== TEST #%d ====\n", index);
+        prefix_test_t test = tests[index];
+
+        char *input = strdup(test.input);
+
+        lexer_t *lexer = lexer_create(input);
+        parser_t *parser = parser_create(lexer);
+        program_t *program = parser_parse_program(parser);
+
+        if (parser_check_errors(parser)) {
+            passed = false;
+            goto pe_free_resources;
+        }
+
+        if (program == NULL) {
+            passed = false;
+            printf("ERROR: Failed to initialize 'program'!\n");
+            goto pe_free_resources;
+        }
+
+        int length = ll_length(program->statements);
+        if (length != 1) {
+            passed = false;
+            printf(
+                "ERROR: Length of program->statements != 1, instead '%d'!\n", 
+                length
+            );
+            goto pe_free_resources;
+        } 
+
+        statement_t *stmt = (statement_t *) program->statements->data;
+        if (stmt->type != STATEMENT_EXPRESSION) {
+            passed = false;
+            printf(
+                "ERROR: Statement type not STATEMENT_EXPRESSION, got '%d' instead.\n", 
+                stmt->type
+            );
+            goto pe_free_resources;
+        }
+
+        statement_expression_t expr_stmt = stmt->statement.expr;
+        expression_t *expr = expr_stmt.expr;
+        if (expr->type != EXPRESSION_PREFIX) {
+            passed = false;
+            printf(
+                "ERROR: Expression type not EXPRESSION_PREFIX, got '%d' instead.\n",
+                expr->type
+            );
+            goto pe_free_resources;
+        } 
+
+        prefix_t prefix = expr->expression.prefix;   
+        if (strcmp(prefix.operator, test.operator) != 0) {
+            passed = false;
+            printf(
+                "ERROR: prefix.operator != '%s', instead got '%s'!\n", 
+                test.operator,
+                prefix.operator
+            );
+            goto pe_free_resources;
+        }
+        passed = test_number(prefix.expr, test.number);
+
+pe_free_resources:
+        ast_program_destroy(program);
+        parser_destroy(parser); 
+
+        if (passed == false) {
+            printf("Test #%d has failed!\n\n", index);
+        }
+        else {
+            printf("Test #%d has passed!\n\n", index);
+        }
+    }
+}
+
+void 
+test_number_expression () {
+    bool passed = true;
+    char *input_raw = "5;";
+    char *input = strdup(input_raw);
+
+    lexer_t *lexer = lexer_create(input);
+    parser_t *parser = parser_create(lexer);
+    program_t *program = parser_parse_program(parser);
+
+	if (parser_check_errors(parser)) {
+		passed = false;
+		goto ne_free_resources;
+	}
+	if (program == NULL) {
+		passed = false;
+		printf("ERROR: Failed to initialize 'program'!\n");
+		goto ne_free_resources;
+	}
+	if (ll_length(program->statements) != 1) {
+		passed = false;
+		printf("ERROR: The number of statements is not 1!\n");
+		goto ne_free_resources;
+	}
+
+    statement_t *stmt = (statement_t *) program->statements->data;
+    if (stmt->type != STATEMENT_EXPRESSION) {
+        passed = false;
+        printf(
+            "ERROR: Statement type not STATEMENT_EXPRESSION, got '%d' instead.\n", 
+            stmt->type
+        );
+        goto ne_free_resources;
+    }
+
+    statement_expression_t expr_stmt = stmt->statement.expr;
+    expression_t *expr = expr_stmt.expr;
+    if (expr->type != EXPRESSION_NUMBER) {
+        passed = false;
+        printf(
+            "ERROR: Expression type not EXPRESSION_NUMBER, got '%d' instead.\n",
+            expr->type
+        );
+        goto ne_free_resources;
+    } 
+
+    number_t ident = expr->expression.number; 
+    int expected_value = 5;
+    if (ident.value != expected_value) {
+        printf(
+            "ERROR: Number value not '%d', got '%d' instead.\n",
+            expected_value,
+            ident.value
+        );
+        goto ne_free_resources;
+    }
+
+ne_free_resources:
+    ast_program_destroy(program);
+    parser_destroy(parser); 
+    
+    if (passed == false) {
+        printf("The test 'number_expression' has failed!\n");
+    }
+    else {
+        printf("The test 'number_expression' has passed!\n");
+    }    
+}
+
+
 
 void 
 test_identifier_expression () {
@@ -111,6 +304,7 @@ test_statement_string_fn () {
     token_destroy(&value_token);
 
     statement_t *stmt = statement_let_create(token, identifier, value);
+    token_destroy(&token);
 
     program_t *program = ast_program_create();
 	ll_append(&program->statements, (void *) stmt);
@@ -319,12 +513,12 @@ test_token () {
 		{TOKEN_LET, "let", 0, 0},
 		{TOKEN_IDENT, "five", 0, 4},
 		{TOKEN_ASSIGN, "=", 0, 9},
-		{TOKEN_INT, "5", 0, 11},
+		{TOKEN_NUMBER, "5", 0, 11},
 		{TOKEN_SEMICOLON, ";", 0, 12},
 		{TOKEN_LET, "let", 1, 0},
 		{TOKEN_IDENT, "ten", 1, 4},
 		{TOKEN_ASSIGN, "=", 1, 8},
-		{TOKEN_INT, "10", 1, 10},
+		{TOKEN_NUMBER, "10", 1, 10},
 		{TOKEN_SEMICOLON, ";", 1, 12},
 		{TOKEN_LET, "let", 3, 0},
 		{TOKEN_IDENT, "add", 3, 4},
@@ -356,19 +550,19 @@ test_token () {
 		{TOKEN_MINUS, "-", 9, 1},
 		{TOKEN_SLASH, "/", 9, 2},
 		{TOKEN_ASTERISK, "*", 9, 3},
-		{TOKEN_INT, "5", 9, 4},
+		{TOKEN_NUMBER, "5", 9, 4},
 		{TOKEN_SEMICOLON, ";", 9, 5},
-		{TOKEN_INT, "5", 10, 0},
+		{TOKEN_NUMBER, "5", 10, 0},
 		{TOKEN_LT, "<", 10, 2},
-		{TOKEN_INT, "10", 10, 4},
+		{TOKEN_NUMBER, "10", 10, 4},
 		{TOKEN_GT, ">", 10, 7},
-		{TOKEN_INT, "5", 10, 9},
+		{TOKEN_NUMBER, "5", 10, 9},
 		{TOKEN_SEMICOLON, ";", 10, 10},
 		{TOKEN_IF, "if", 12, 0},
 		{TOKEN_LPAREN, "(", 12, 3},
-		{TOKEN_INT, "5", 12, 4},
+		{TOKEN_NUMBER, "5", 12, 4},
 		{TOKEN_LT, "<", 12, 6},
-		{TOKEN_INT, "10", 12, 8},
+		{TOKEN_NUMBER, "10", 12, 8},
 		{TOKEN_RPAREN, ")", 12, 10},
 		{TOKEN_LBRACE, "{", 12, 12},
 		{TOKEN_RETURN, "return", 13, 4},
@@ -381,13 +575,13 @@ test_token () {
 		{TOKEN_FALSE, "false", 15, 11},
 		{TOKEN_SEMICOLON, ";", 15, 16},
 		{TOKEN_RBRACE, "}", 16, 0},
-		{TOKEN_INT, "10", 18, 0},
+		{TOKEN_NUMBER, "10", 18, 0},
 		{TOKEN_EQ, "==", 18, 3},
-		{TOKEN_INT, "10", 18, 6},
+		{TOKEN_NUMBER, "10", 18, 6},
 		{TOKEN_SEMICOLON, ";", 18, 8},
-		{TOKEN_INT, "10", 19, 0},
+		{TOKEN_NUMBER, "10", 19, 0},
 		{TOKEN_NEQ, "!=", 19, 3},
-		{TOKEN_INT, "9", 19, 6},
+		{TOKEN_NUMBER, "9", 19, 6},
 		{TOKEN_SEMICOLON, ";", 19, 7},
 		{TOKEN_EOF, "", 0, 0},
 	};

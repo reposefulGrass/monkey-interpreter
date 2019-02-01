@@ -1,17 +1,19 @@
 
 HEADERS = token.h lexer.h ast.h parser.h statement.h expression.h
 LIBS = token.o lexer.o ast.o parser.o statement.o expression.o
-DEPS = linked_list/linked_list.o
+DEPS = linked_list/linked_list.o dynamic_string/dynamic_string.o
 FLAGS = -Wall -Wextra -Werror -pedantic -g
 MAKE_FLAGS = --no-print-directory
 
 monkey : monkey.c $(LIBS) $(HEADERS)
 	@cd linked_list && make linked_list.o $(MAKE_FLAGS) && cd ..
+	@cd dynamic_string && make dynamic_string.o $(MAKE_FLAGS) && cd ..
 	@echo 'Compiling [monkey.c]'
 	@gcc monkey.c -o monkey $(LIBS) $(DEPS) $(FLAGS)
 
 test : test.c $(LIBS) $(HEADERS)
 	@cd linked_list && make linked_list.o $(MAKE_FLAGS) && cd ..
+	@cd dynamic_string && make dynamic_string.o $(MAKE_FLAGS) && cd ..
 	@echo 'Compiling [test.c]'
 	@gcc test.c -o test $(LIBS) $(DEPS) $(FLAGS)
 

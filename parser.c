@@ -2,6 +2,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <limits.h>
+#include <errno.h>
 
 #include "colors.h"
 #include "token.h"
@@ -94,7 +96,11 @@ parser_parse_statement_let (parser_t *p) {
 
     expression_t *value = NULL;
 
-    return statement_let_create(let_token, identifier, value);
+    statement_t *let_stmt = statement_let_create(let_token, identifier, value);
+    token_destroy(&let_token);
+    token_destroy(&ident_token);
+
+    return let_stmt;
 }
 
 
@@ -109,7 +115,10 @@ parser_parse_statement_return (parser_t *p) {
 
     expression_t *value = NULL;
 
-    return statement_return_create(return_token, value);
+    statement_t *ret_stmt = statement_return_create(return_token, value);
+    token_destroy(&return_token);
+
+    return ret_stmt;
 }
 
 
@@ -118,17 +127,26 @@ parser_parse_statement_expression (parser_t *parser) {
     token_t expr_token = token_dup(parser->current_token);
     expression_t *expr = parser_parse_expression(parser, PRECEDENCE_LOWEST);
 
+    if (expr == NULL) {
+        token_destroy(&expr_token);
+        return NULL;
+    }
+
     if (parser_peek_token_is(parser, TOKEN_SEMICOLON)) {
         parser_next_token(parser); 
     }
 
-    return statement_expression_create(expr_token, expr);
+    statement_t *expr_stmt = statement_expression_create(expr_token, expr);
+    token_destroy(&expr_token);
+
+    return expr_stmt;
 }
 
 expression_t *  
 parser_parse_expression (parser_t *parser, precedence_t precedence) {
     fn_ptr prefix = parser_get_prefix_fn(parser->current_token.type);     
     if (prefix == NULL) {
+        parser_no_prefix_fn_error(parser);
         return NULL; // TODO: Add proper error handling
     }
 
@@ -146,6 +164,13 @@ parser_get_prefix_fn (tokentype_t type) {
         case TOKEN_IDENT:
             return parser_parse_expression_identifier;
 
+        case TOKEN_NUMBER: 
+            return parser_parse_expression_number;
+
+        case TOKEN_BANG:
+        case TOKEN_MINUS:
+            return parser_parse_expression_prefix;
+
         default:
             return NULL;
     } 
@@ -155,6 +180,31 @@ parser_get_prefix_fn (tokentype_t type) {
 expression_t *
 parser_parse_expression_identifier (parser_t *parser) {
     return expression_identifier_create(parser->current_token);
+}
+
+expression_t *  
+parser_parse_expression_number (parser_t *parser) {
+    token_t curr_token = parser->current_token;
+
+    long number = strtol(curr_token.literal, NULL, 10);
+    if (errno == ERANGE || number < INT_MIN || number > INT_MAX) {
+        parser_invalid_number_error(parser);
+        return NULL;
+    }
+
+    return expression_number_create(curr_token, number);
+}
+
+
+expression_t *
+parser_parse_expression_prefix (parser_t *parser) {
+    token_t curr_token = token_dup(parser->current_token);
+    char *operator = strdup(curr_token.literal);
+
+    parser_next_token(parser);
+    expression_t *right = parser_parse_expression(parser, PRECEDENCE_PREFIX);
+
+    return expression_prefix_create(curr_token, operator, right);
 }
 
 
@@ -180,6 +230,62 @@ parser_expect_peek (parser_t *p, tokentype_t type) {
 	parser_peek_error(p, type);
 	return false;
 }
+
+
+void
+parser_invalid_number_error (parser_t *parser) {
+    // create error message
+    char *error_msg = 
+	    "Error at " YELLOW "|%d:%d| " RESET "Expected a number in the range of %d to %d!\n";
+
+    int error_msg_len = 
+	    strlen(error_msg) - (4 * 2) +	// 4 * strlen("%d")
+	    4 * 10 + 1;						// 4 * size of a maximum integer + NULL
+
+    char *error = (char *) malloc(sizeof(char) * error_msg_len);
+    if (error == NULL) {
+        fprintf(stderr, "ERROR in 'parser_invalid_number_error': Failed to allocate 'error'!\n");
+        exit(EXIT_FAILURE);
+    }
+
+    snprintf(
+        error, error_msg_len, error_msg, 
+        parser->current_token.line, parser->current_token.position, INT_MIN, INT_MAX
+    );
+    ll_append(&parser->errors, error);
+}
+
+
+void
+parser_no_prefix_fn_error (parser_t *parser) {
+    char *typename = token_name(parser->current_token.type);
+
+    char *error_msg = 
+        "Error at " YELLOW "|%d:%d| " RESET
+        "No prefix parse function for '%s' found!";
+
+    int error_msg_len =
+        strlen(typename) + 
+        strlen(error_msg) - (3 * 2) +   // 2 * strlen("%d") + strlen("%s")
+        2 * 10 + 1;                     // 2 * size of a maximum integer + NULL
+
+    char *error = (char *) malloc(sizeof(char) * error_msg_len);
+    if (error == NULL) {
+        fprintf(
+            stderr, 
+            "ERROR in 'parser_no_prefix_fn_error': Failed to allocate 'error'!\n"
+        );
+        exit(EXIT_FAILURE);
+    }
+
+    snprintf(
+        error, error_msg_len, error_msg, 
+        parser->current_token.line, parser->current_token.position, typename
+    ); 
+
+    ll_append(&parser->errors, error);
+}
+
 
 void
 parser_peek_error (parser_t *p, tokentype_t type) {

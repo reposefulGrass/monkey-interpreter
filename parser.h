@@ -42,11 +42,15 @@ statement_t *   parser_parse_statement_expression   (parser_t *p);
 
 expression_t *  parser_parse_expression             (parser_t *p, precedence_t prec);
 expression_t *  parser_parse_expression_identifier  (parser_t *p);
+expression_t *  parser_parse_expression_number      (parser_t *p);
+expression_t *  parser_parse_expression_prefix      (parser_t *p);
 
 bool		    parser_current_token_is	            (parser_t *p, tokentype_t t);
 bool		    parser_peek_token_is 		        (parser_t *p, tokentype_t t);
 bool		    parser_expect_peek			        (parser_t *p, tokentype_t t);
 
+void            parser_invalid_number_error         (parser_t *parser);
+void            parser_no_prefix_fn_error           (parser_t *parser);
 void 		    parser_peek_error 			        (parser_t *p, tokentype_t type);
 bool		    parser_check_errors		            (parser_t *p);
 

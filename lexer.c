@@ -207,7 +207,7 @@ lexer_next_token (lexer_t *l) {
 			else if (is_digit(l->ch)) {
 				tok.line = l->curr_line;
 				tok.position = l->nth_char;
-				tok.type = TOKEN_INT;
+				tok.type = TOKEN_NUMBER;
 				tok.literal = lexer_read_number(l);
 				return tok;
 			}
