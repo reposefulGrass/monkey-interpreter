@@ -62,7 +62,7 @@ typedef struct {
     int left;
     char *operator;
     int right;
-} indix_test_t;
+} infix_test_t;
 
 void
 test_infix_expression () {
