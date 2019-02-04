@@ -11,6 +11,7 @@
 #include "ast.h"
 #include "statement.h"
 #include "expression.h"
+#include "test.h"
 
 
 void test_token ();
@@ -20,6 +21,7 @@ void test_statement_string_fn ();
 void test_identifier_expression();
 void test_number_expression();
 void test_prefix_expression();
+void test_infix_expression();
 
 int 
 main () {
@@ -29,9 +31,8 @@ main () {
     //test_statement_string_fn();
     //test_identifier_expression();
     //test_number_expression();
-    test_prefix_expression();
-
-    // TODO: Write a few macros for the common test cases
+    //test_prefix_expression();
+    test_infix_expression();
 }
 
 bool
@@ -48,13 +49,84 @@ test_number (expression_t *expr, int expected_number) {
     if (number.value != expected_number) {
         printf(
             "ERROR: number.value != '%d', instead got '%d'!\n",
-            expected_number,
-            number.value
+            expected_number, number.value
         );
         return false;
     }
 
     return true;
+}
+
+typedef struct {
+    char *input;
+    int left;
+    char *operator;
+    int right;
+} indix_test_t;
+
+void
+test_infix_expression () {
+    bool passed = true;
+
+    infix_test_t tests[] = {
+        {"5 + 5;", 5, "+", 5},
+        {"5 - 5;", 5, "-", 5},
+        {"5 * 5;", 5, "*", 5},
+        {"5 / 5;", 5, "/", 5},
+        {"5 > 5;", 5, ">", 5},
+        {"5 < 5;", 5, "<", 5},
+        {"5 == 5;", 5, "==", 5},
+        {"5 != 5;", 5, "!=", 5},
+    };
+
+    int size = sizeof(tests) / sizeof(infix_test_t);
+    for (int index = 0; index < size; index++) {
+        printf("==== TEST #%d ====\n", index);
+        infix_test_t test = tests[index];
+
+        char *input = strdup(test.input);
+
+        lexer_t *lexer = lexer_create(input);
+        parser_t *parser = parser_create(lexer);
+        program_t *program = parser_parse_program(parser);
+
+        CHECK_PARSER_ERRORS(parser, infix_expression_end)
+        CHECK_PROGRAM_NOT_NULL(program, infix_expression_end)
+        CHECK_LIST_IS_PROPER(program->statements, 1, infix_expression_end)
+
+        statement_t *stmt = (statement_t *) program->statements->data;
+        CHECK_STATEMENT_TYPE(stmt->type, STATEMENT_EXPRESSION, goto infix_expresion_end)
+
+        statement_expression_t expr_stmt = stmt->statement.expr;
+        expression_t *expr = expr_stmt.expr;
+        CHECK_EXPRESSION_TYPE(expr->type, EXPRESSION_PREFIX, goto infix_expression_end)
+
+        infix_t infix = expr->expression.infix;   
+
+        passed = test_number(infix.left_expr, test.left);
+
+        if (strcmp(prefix.operator, test.operator) != 0) {
+            passed = false;
+            printf(
+                "ERROR: infix.operator != '%s', instead got '%s'!\n", 
+                test.operator, infix.operator
+            );
+            goto infix_expression_end;
+        }
+
+        passed = test_number(infix.right_expr, test.right);
+
+infix_expression_end:
+        ast_program_destroy(program);
+        parser_destroy(parser); 
+
+        if (passed == false) {
+            printf("Test #%d has failed!\n\n", index);
+        }
+        else {
+            printf("Test #%d has passed!\n\n", index);
+        }
+    }
 }
 
 typedef struct {
@@ -83,55 +155,23 @@ test_prefix_expression () {
         parser_t *parser = parser_create(lexer);
         program_t *program = parser_parse_program(parser);
 
-        if (parser_check_errors(parser)) {
-            passed = false;
-            goto pe_free_resources;
-        }
-
-        if (program == NULL) {
-            passed = false;
-            printf("ERROR: Failed to initialize 'program'!\n");
-            goto pe_free_resources;
-        }
-
-        int length = ll_length(program->statements);
-        if (length != 1) {
-            passed = false;
-            printf(
-                "ERROR: Length of program->statements != 1, instead '%d'!\n", 
-                length
-            );
-            goto pe_free_resources;
-        } 
+        CHECK_PARSER_ERRORS(parser, pe_free_resources)
+        CHECK_PROGRAM_NOT_NULL(program, pe_free_resources)
+        CHECK_LIST_IS_PROPER(program->statements, 1, pe_free_resources)
 
         statement_t *stmt = (statement_t *) program->statements->data;
-        if (stmt->type != STATEMENT_EXPRESSION) {
-            passed = false;
-            printf(
-                "ERROR: Statement type not STATEMENT_EXPRESSION, got '%d' instead.\n", 
-                stmt->type
-            );
-            goto pe_free_resources;
-        }
+        CHECK_STATEMENT_TYPE(stmt->type, STATEMENT_EXPRESSION, goto pe_free_resources)
 
         statement_expression_t expr_stmt = stmt->statement.expr;
         expression_t *expr = expr_stmt.expr;
-        if (expr->type != EXPRESSION_PREFIX) {
-            passed = false;
-            printf(
-                "ERROR: Expression type not EXPRESSION_PREFIX, got '%d' instead.\n",
-                expr->type
-            );
-            goto pe_free_resources;
-        } 
+        CHECK_EXPRESSION_TYPE(expr->type, EXPRESSION_PREFIX, goto pe_free_resources)
 
         prefix_t prefix = expr->expression.prefix;   
         if (strcmp(prefix.operator, test.operator) != 0) {
             passed = false;
             printf(
                 "ERROR: prefix.operator != '%s', instead got '%s'!\n", 
-                test.operator,
-                prefix.operator
+                test.operator, prefix.operator
             );
             goto pe_free_resources;
         }
@@ -160,49 +200,23 @@ test_number_expression () {
     parser_t *parser = parser_create(lexer);
     program_t *program = parser_parse_program(parser);
 
-	if (parser_check_errors(parser)) {
-		passed = false;
-		goto ne_free_resources;
-	}
-	if (program == NULL) {
-		passed = false;
-		printf("ERROR: Failed to initialize 'program'!\n");
-		goto ne_free_resources;
-	}
-	if (ll_length(program->statements) != 1) {
-		passed = false;
-		printf("ERROR: The number of statements is not 1!\n");
-		goto ne_free_resources;
-	}
+    CHECK_PARSER_ERRORS(parser, ne_free_resources)
+    CHECK_PROGRAM_NOT_NULL(program, ne_free_resources)
+    CHECK_LIST_IS_PROPER(program->statements, 1, ne_free_resources)
 
     statement_t *stmt = (statement_t *) program->statements->data;
-    if (stmt->type != STATEMENT_EXPRESSION) {
-        passed = false;
-        printf(
-            "ERROR: Statement type not STATEMENT_EXPRESSION, got '%d' instead.\n", 
-            stmt->type
-        );
-        goto ne_free_resources;
-    }
+    CHECK_STATEMENT_TYPE(stmt->type, STATEMENT_EXPRESSION, goto ne_free_resources)
 
     statement_expression_t expr_stmt = stmt->statement.expr;
     expression_t *expr = expr_stmt.expr;
-    if (expr->type != EXPRESSION_NUMBER) {
-        passed = false;
-        printf(
-            "ERROR: Expression type not EXPRESSION_NUMBER, got '%d' instead.\n",
-            expr->type
-        );
-        goto ne_free_resources;
-    } 
+    CHECK_EXPRESSION_TYPE(expr->type, EXPRESSION_NUMBER, goto ne_free_resources);
 
     number_t ident = expr->expression.number; 
     int expected_value = 5;
     if (ident.value != expected_value) {
         printf(
             "ERROR: Number value not '%d', got '%d' instead.\n",
-            expected_value,
-            ident.value
+            expected_value, ident.value
         );
         goto ne_free_resources;
     }
@@ -231,47 +245,23 @@ test_identifier_expression () {
     parser_t *parser = parser_create(lexer);
     program_t *program = parser_parse_program(parser);
 
-	if (parser_check_errors(parser)) {
-		passed = false;
-		goto ie_free_resources;
-	}
-	if (program == NULL) {
-		passed = false;
-		printf("ERROR: Failed to initialize 'program'!\n");
-		goto ie_free_resources;
-	}
-	if (ll_length(program->statements) != 1) {
-		passed = false;
-		printf("ERROR: The number of statements is not 1!\n");
-		goto ie_free_resources;
-	}
+    CHECK_PARSER_ERRORS(parser, ie_free_resources)
+    CHECK_PROGRAM_NOT_NULL(program, ie_free_resources)
+    CHECK_LIST_IS_PROPER(program->statements, 1, ie_free_resources)
 
     statement_t *stmt = (statement_t *) program->statements->data;
-    if (stmt->type != STATEMENT_EXPRESSION) {
-        printf(
-            "ERROR: Statement type not STATEMENT_EXPRESSION, got '%d' instead.\n", 
-            stmt->type
-        );
-        goto ie_free_resources;
-    }
+    CHECK_STATEMENT_TYPE(stmt->type, STATEMENT_EXPRESSION, goto ie_free_resources)
 
     statement_expression_t expr_stmt = stmt->statement.expr;
     expression_t *expr = expr_stmt.expr;
-    if (expr->type != EXPRESSION_IDENTIFIER) {
-        printf(
-            "ERROR: Expression type not EXPRESSION_IDENTIFIER, got '%d' instead.\n",
-            expr->type
-        );
-        goto ie_free_resources;
-    } 
+    CHECK_EXPRESSION_TYPE(expr->type, EXPRESSION_IDENTIFIER, goto ie_free_resources)
 
     identifier_t ident = expr->expression.identifier; 
     char *expected_value = "foobar";
     if (strcmp(ident.value, expected_value) != 0) {
         printf(
             "ERROR: Identifier value not '%s', got '%s' instead.\n",
-            expected_value,
-            ident.value
+            expected_value, ident.value
         );
         goto ie_free_resources;
     }
@@ -338,37 +328,17 @@ test_return_statements() {
 
 	lexer_t *lexer = lexer_create(input);
 	parser_t *parser = parser_create(lexer);
-
 	program_t *program = parser_parse_program(parser);
-	if (parser_check_errors(parser)) {
-		passed = false;
-		goto rs_free_resources;
-	}
 
-	if (program == NULL) {
-		passed = false;
-		printf("ERROR: Failed to initialize 'program'!\n");
-		goto rs_free_resources;
-	}
-
-	if (ll_length(program->statements) != 3) {
-		passed = false;
-		printf("ERROR: The number of statements is not 3!\n");
-		goto rs_free_resources;
-	}
+    CHECK_PARSER_ERRORS(parser, rs_free_resources)
+    CHECK_PROGRAM_NOT_NULL(program, rs_free_resources)
+    CHECK_LIST_IS_PROPER(program->statements, 3, rs_free_resources)
 
 	list cursor = NULL;
 	while ((cursor = ll_iterator(program->statements, cursor)) != NULL) {
 		statement_t *stmt = (statement_t *) cursor->data;
 
-        if (stmt->type != STATEMENT_RETURN) {
-            passed = false;
-            printf(
-                "ERROR: stmt is not of type STATEMENT_RETURN; got type ID: '%d'.\n", 
-                stmt->type
-            );
-            continue;
-        }
+        CHECK_STATEMENT_TYPE(stmt->type, STATEMENT_RETURN, continue)
 
         if (strcmp(stmt->token_literal(stmt), "return") != 0) {
             passed = false;
@@ -393,10 +363,13 @@ rs_free_resources:
 
 bool
 test_let_statement (statement_t *stmt, char *expected_identifier) {
-	if (stmt->type != STATEMENT_LET) {
-		printf("ERROR: stmt->type not STATEMENT_LET. got '%d'\n", stmt->type);
-		return false;
-	}
+    if (stmt->type != STATEMENT_LET) {
+        printf(
+            "ERROR: Statement type != '%d', got '%d' instead!\n", 
+            STATEMENT_LET, stmt->type
+        );
+        return false;
+    }
 
 	if (strcmp(stmt->token_literal(stmt), "let") != 0) {
 		printf(
@@ -412,8 +385,7 @@ test_let_statement (statement_t *stmt, char *expected_identifier) {
 	if (strcmp(identifier, expected_identifier)) {
 		printf(
 			"ERROR: let_stmt->name.token.literal not '%s'. got '%s'.\n",
-			expected_identifier,
-			identifier
+			expected_identifier, identifier
 		);
 		return false;
 	}
@@ -433,24 +405,11 @@ test_let_statements() {
 
 	lexer_t *lexer = lexer_create(input);
 	parser_t *parser = parser_create(lexer);
-
 	program_t *program = parser_parse_program(parser);
-	if (parser_check_errors(parser)) {
-		passed = false;
-		goto ls_free_resources;
-	}
 
-	if (program == NULL) {
-		passed = false;
-		printf("ERROR: Failed to initialize 'program'!\n");
-		goto ls_free_resources;
-	}
-
-	if (ll_length(program->statements) != 3) {
-		passed = false;
-		printf("ERROR: The number of statements is not 3!\n");
-		goto ls_free_resources;
-	}
+    CHECK_PARSER_ERRORS(parser, ls_free_resources)
+    CHECK_PROGRAM_NOT_NULL(program, ls_free_resources)
+    CHECK_LIST_IS_PROPER(program->statements, 3, ls_free_resources)
 
 	char *tests[] = {
 		"x",
