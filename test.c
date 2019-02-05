@@ -95,17 +95,17 @@ test_infix_expression () {
         CHECK_LIST_IS_PROPER(program->statements, 1, infix_expression_end)
 
         statement_t *stmt = (statement_t *) program->statements->data;
-        CHECK_STATEMENT_TYPE(stmt->type, STATEMENT_EXPRESSION, goto infix_expresion_end)
+        CHECK_STATEMENT_TYPE(stmt->type, STATEMENT_EXPRESSION, goto infix_expression_end)
 
         statement_expression_t expr_stmt = stmt->statement.expr;
         expression_t *expr = expr_stmt.expr;
-        CHECK_EXPRESSION_TYPE(expr->type, EXPRESSION_PREFIX, goto infix_expression_end)
+        CHECK_EXPRESSION_TYPE(expr->type, EXPRESSION_INFIX, goto infix_expression_end)
 
         infix_t infix = expr->expression.infix;   
 
         passed = test_number(infix.left_expr, test.left);
 
-        if (strcmp(prefix.operator, test.operator) != 0) {
+        if (strcmp(infix.operator, test.operator) != 0) {
             passed = false;
             printf(
                 "ERROR: infix.operator != '%s', instead got '%s'!\n", 

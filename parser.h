@@ -44,6 +44,7 @@ expression_t *  parser_parse_expression             (parser_t *p, precedence_t p
 expression_t *  parser_parse_expression_identifier  (parser_t *p);
 expression_t *  parser_parse_expression_number      (parser_t *p);
 expression_t *  parser_parse_expression_prefix      (parser_t *p);
+expression_t *  parser_parse_expression_infix       (parser_t *p, expression_t *left);
 
 bool		    parser_current_token_is	            (parser_t *p, tokentype_t t);
 bool		    parser_peek_token_is 		        (parser_t *p, tokentype_t t);
@@ -53,6 +54,10 @@ void            parser_invalid_number_error         (parser_t *parser);
 void            parser_no_prefix_fn_error           (parser_t *parser);
 void 		    parser_peek_error 			        (parser_t *p, tokentype_t type);
 bool		    parser_check_errors		            (parser_t *p);
+
+precedence_t    parser_get_precedence               (tokentype_t type);
+precedence_t    parser_curr_precedence              (parser_t *parser);
+precedence_t    parser_peek_precedence              (parser_t *parser);
 
 typedef expression_t * (*fn_ptr)(); // fn_ptr is pointer to a function
 

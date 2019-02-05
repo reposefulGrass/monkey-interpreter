@@ -147,6 +147,67 @@ expression_prefix_destroy (expression_t *expr) {
     free(expr);
 }
 
+expression_t *  
+expression_infix_create (token_t token, char *op, expression_t *left_expr, expression_t *right_expr) {
+    expression_t *expr = (expression_t *) malloc(sizeof(expression_t));
+    if (expr == NULL) {
+        fprintf(stderr, "ERROR in 'expression_prefix_create': Failed to allocate 'expr'!\n");
+        exit(EXIT_FAILURE);
+    }
+
+    expr->type = EXPRESSION_INFIX;
+    expr->expression.infix = (infix_t) {
+        .token = token_dup(token),
+        .operator = strdup(op),
+        .left_expr = left_expr,
+        .right_expr = right_expr
+    };
+
+    expr->token_literal = expression_infix_token_literal;
+    expr->string = expression_infix_string;
+    expr->destroy = expression_infix_destroy;
+
+    return expr;
+}
+
+char *  
+expression_infix_token_literal (expression_t *expr) {
+    infix_t infix = expr->expression.infix;
+    return infix.token.literal;
+}
+
+char *          
+expression_infix_string (expression_t *expr) {
+    infix_t infix = expr->expression.infix;
+    ds_t *dstring = ds_initialize();
+
+    char *left = infix.left_expr->string(infix.left_expr);
+    char *right = infix.right_expr->string(infix.right_expr);
+
+    ds_append(dstring, "(");
+    ds_append(dstring, left);
+    ds_append(dstring, infix.operator);
+    ds_append(dstring, right);
+    ds_append(dstring, ")");
+
+    char *string = ds_to_string(dstring);
+    free(left);
+    free(right);
+    return string;
+}
+
+void            
+expression_infix_destroy (expression_t *expr) {
+    infix_t infix = expr->expression.infix;
+
+    token_destroy(&infix.token);
+    free(infix.operator);
+    infix.left_expr->destroy(infix.left_expr);
+    infix.right_expr->destroy(infix.right_expr);
+    free(expr);
+}
+
+
 void
 expression_destroy (expression_t *expr) {
     expr->destroy(expr); 

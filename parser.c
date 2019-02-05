@@ -147,16 +147,42 @@ parser_parse_expression (parser_t *parser, precedence_t precedence) {
     fn_ptr prefix = parser_get_prefix_fn(parser->current_token.type);     
     if (prefix == NULL) {
         parser_no_prefix_fn_error(parser);
-        return NULL; // TODO: Add proper error handling
+        return NULL; 
+    }
+    expression_t *left_expr = prefix(parser);
+
+    while (
+        !parser_peek_token_is(parser, TOKEN_SEMICOLON) && 
+        precedence < parser_peek_precedence(parser)
+    ) {
+        fn_ptr infix = parser_get_infix_fn(parser->peek_token.type);
+        if (infix == NULL) {
+            return left_expr;
+        }
+        
+        parser_next_token(parser); 
+        left_expr = infix(parser, left_expr);
     }
 
-    // filler to use parameter 'precedence'; temporary.
-    if (precedence == PRECEDENCE_LOWEST) {}
-
-    expression_t *left_expr = prefix(parser);
     return left_expr;
 }
 
+precedence_t    
+parser_get_precedence (tokentype_t type) {
+    switch (type) {
+        case TOKEN_EQ:          return PRECEDENCE_EQUALS;
+        case TOKEN_NEQ:         return PRECEDENCE_EQUALS;
+        case TOKEN_LT:          return PRECEDENCE_LESSGREATER;
+        case TOKEN_GT:          return PRECEDENCE_LESSGREATER;
+        case TOKEN_PLUS:        return PRECEDENCE_SUM;
+        case TOKEN_MINUS:       return PRECEDENCE_SUM;
+        case TOKEN_SLASH:       return PRECEDENCE_PRODUCT;
+        case TOKEN_ASTERISK:    return PRECEDENCE_PRODUCT;
+        default:                return PRECEDENCE_LOWEST;
+    }
+
+    return PRECEDENCE_LOWEST;
+}
 
 fn_ptr          
 parser_get_prefix_fn (tokentype_t type) {
@@ -174,6 +200,24 @@ parser_get_prefix_fn (tokentype_t type) {
         default:
             return NULL;
     } 
+}
+
+fn_ptr
+parser_get_infix_fn (tokentype_t type) {
+    switch (type) {
+        case TOKEN_PLUS:
+        case TOKEN_MINUS:
+        case TOKEN_SLASH:
+        case TOKEN_ASTERISK:
+        case TOKEN_EQ:
+        case TOKEN_NEQ:
+        case TOKEN_LT:
+        case TOKEN_GT:
+            return parser_parse_expression_infix;
+
+        default:
+            return NULL;
+    }
 }
 
 
@@ -205,6 +249,31 @@ parser_parse_expression_prefix (parser_t *parser) {
     expression_t *right = parser_parse_expression(parser, PRECEDENCE_PREFIX);
 
     return expression_prefix_create(curr_token, operator, right);
+}
+
+
+expression_t *
+parser_parse_expression_infix (parser_t *parser, expression_t *left_expr) {
+    token_t curr_token = token_dup(parser->current_token);
+    char *operator = strdup(curr_token.literal);
+
+    precedence_t prec = parser_curr_precedence(parser);
+    parser_next_token(parser);
+    expression_t *right_expr = parser_parse_expression(parser, prec);
+
+    return expression_infix_create(curr_token, operator, left_expr, right_expr);
+}
+
+
+precedence_t
+parser_curr_precedence (parser_t *parser) {
+    return parser_get_precedence(parser->current_token.type);
+}
+
+
+precedence_t
+parser_peek_precedence (parser_t *parser) {
+    return parser_get_precedence(parser->peek_token.type);
 }
 
 
