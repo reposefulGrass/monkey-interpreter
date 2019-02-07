@@ -186,7 +186,9 @@ expression_infix_string (expression_t *expr) {
 
     ds_append(dstring, "(");
     ds_append(dstring, left);
+    ds_append(dstring, " ");
     ds_append(dstring, infix.operator);
+    ds_append(dstring, " ");
     ds_append(dstring, right);
     ds_append(dstring, ")");
 

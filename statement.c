@@ -169,7 +169,7 @@ statement_expression_string (statement_t *stmt) {
     // temporary since we havent implemented expressions yet
     if (expr_stmt.expr != NULL) {
         expression_t *expr = expr_stmt.expr;
-        return strdup(expr->string(expr));
+        return expr->string(expr);
     }
 
     return NULL;

@@ -243,25 +243,29 @@ parser_parse_expression_number (parser_t *parser) {
 expression_t *
 parser_parse_expression_prefix (parser_t *parser) {
     token_t curr_token = token_dup(parser->current_token);
-    char *operator = strdup(curr_token.literal);
+    char *operator = curr_token.literal;
 
     parser_next_token(parser);
     expression_t *right = parser_parse_expression(parser, PRECEDENCE_PREFIX);
 
-    return expression_prefix_create(curr_token, operator, right);
+    expression_t *prefix_expr =  expression_prefix_create(curr_token, operator, right);
+    token_destroy(&curr_token);
+    return prefix_expr;
 }
 
 
 expression_t *
 parser_parse_expression_infix (parser_t *parser, expression_t *left_expr) {
     token_t curr_token = token_dup(parser->current_token);
-    char *operator = strdup(curr_token.literal);
+    char *operator = curr_token.literal;
 
     precedence_t prec = parser_curr_precedence(parser);
     parser_next_token(parser);
     expression_t *right_expr = parser_parse_expression(parser, prec);
 
-    return expression_infix_create(curr_token, operator, left_expr, right_expr);
+    expression_t *infix_expr = expression_infix_create(curr_token, operator, left_expr, right_expr);
+    token_destroy(&curr_token);
+    return infix_expr;
 }
 
 

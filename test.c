@@ -22,6 +22,7 @@ void test_identifier_expression();
 void test_number_expression();
 void test_prefix_expression();
 void test_infix_expression();
+void test_expression_string();
 
 int 
 main () {
@@ -32,7 +33,8 @@ main () {
     //test_identifier_expression();
     //test_number_expression();
     //test_prefix_expression();
-    test_infix_expression();
+    //test_infix_expression();
+    test_expression_string();
 }
 
 bool
@@ -55,6 +57,99 @@ test_number (expression_t *expr, int expected_number) {
     }
 
     return true;
+}
+
+typedef struct {
+    char *input;
+    char *expected; // output of program_string()
+} expression_test_t;
+
+void
+test_expression_string () {
+    bool passed = true;
+
+    expression_test_t tests[] = {
+        {
+            "-a * b",
+            "((-a) * b)" 
+        },
+        {
+            "!-a",
+            "(!(-a))" 
+        },
+        {
+            "a + b + c",
+            "((a + b) + c)" 
+        },
+        {
+            "a + b - c",
+            "((a + b) - c)" 
+        },
+        {
+            "a * b * c",
+            "((a * b) * c)" 
+        },
+        {
+            "a * b / c", 
+            "((a * b) / c)"
+        },
+        {
+            "a + b / c",
+            "(a + (b / c))" 
+        },
+        {
+            "a + b * c + d / e - f",
+            "(((a + (b * c)) + (d / e)) - f)" 
+        },
+        {
+            "3 + 4; -5 * 5",
+            "(3 + 4)((-5) * 5)"
+        },
+        {
+            "5 > 4 == 3 < 4",
+            "((5 > 4) == (3 < 4))"
+        },
+        {
+            "5 < 4 != 3 < 4",
+            "((5 < 4) != (3 < 4))" 
+        },
+        {
+            "3 + 4 * 5 == 3 * 1 + 4 * 5",
+            "((3 + (4 * 5)) == ((3 * 1) + (4 * 5)))" 
+        },
+    };
+
+    int size = sizeof(tests) / sizeof(expression_test_t);
+    for (int i = 0; i < size; i++) {
+        printf("==== TEST #%d ====\n", i);
+        expression_test_t test = tests[i];
+
+        char *input = strdup(test.input);
+
+        lexer_t *lexer = lexer_create(input);
+        parser_t *parser = parser_create(lexer);
+        program_t *program = parser_parse_program(parser);
+
+        CHECK_PARSER_ERRORS(parser, expr_string_end)
+        CHECK_PROGRAM_NOT_NULL(program, expr_string_end)
+
+        char *actual = ast_program_string(program);
+        if (strcmp(actual, test.expected) != 0) {
+            printf("Error: Expected '%s', got '%s' instead.\n", test.expected, actual);
+        } 
+        free(actual);
+
+expr_string_end:
+        ast_program_destroy(program);
+        parser_destroy(parser); 
+
+        if (passed == false) {
+            printf("Test #%d has failed!\n\n", i);
+        }
+        else {
+            printf("Test #%d has passed!\n\n", i);
+        }
+    }
 }
 
 typedef struct {
