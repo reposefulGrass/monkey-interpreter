@@ -15,7 +15,7 @@
         goto label; \
     }
 
-#define CHECK_LIST_IS_PROPER(list, len, label) \
+#define CHECK_LIST_LEN(list, len, label) \
     int length = ll_length((list)); \
     if (length != (len)) { \
         passed = false; \
@@ -37,8 +37,5 @@
         label; \
     }
 
-
-
-
-
 #endif /* TEST_H */
+

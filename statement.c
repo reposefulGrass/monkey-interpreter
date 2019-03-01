@@ -7,51 +7,51 @@
 #include "statement.h"
 #include "token.h"
 
-statement_t *
-statement_let_create (token_t token, expression_t *identifier, expression_t *value) {
-    statement_t *stmt = (statement_t *) malloc(sizeof(statement_t));
+stmt_t *
+stmt_let_create (token_t token, expr_t *identifier, expr_t *value) {
+    stmt_t *stmt = (stmt_t *) malloc(sizeof(stmt_t));
     if (stmt == NULL) {
-        fprintf(stderr, "ERROR in 'statement_let_create': Failed to allocate 'stmt'!\n");
+        fprintf(stderr, "ERROR in 'stmt_let_create': Failed to allocate 'stmt'!\n");
         exit(EXIT_FAILURE);
     }
 
     stmt->type = STATEMENT_LET;
-    stmt->statement.let = (statement_let_t) {
+    STMT_LET(stmt) = (stmt_let_t) {
         .token = token_dup(token),
         .name = identifier,
         .value = value 
     };
 
-    stmt->token_literal = statement_let_token_literal;
-    stmt->string = statement_let_string;
-    stmt->destroy = statement_let_destroy;
+    stmt->token_literal = stmt_let_token_literal;
+    stmt->string = stmt_let_string;
+    stmt->destroy = stmt_let_destroy;
 
     return stmt;
 }
 
 char *
-statement_let_token_literal (statement_t *stmt) {
-	statement_let_t let_stmt = stmt->statement.let;	
+stmt_let_token_literal (stmt_t *stmt) {
+	stmt_let_t let_stmt = STMT_LET(stmt);
 	return let_stmt.token.literal;
 }
 
 
 char *
-statement_let_string (statement_t *stmt) {
-    statement_let_t let_stmt = stmt->statement.let;
+stmt_let_string (stmt_t *stmt) {
+    stmt_let_t let_stmt = STMT_LET(stmt);
     ds_t *dstring = ds_initialize();
 
-    char *literal = stmt->token_literal(stmt);
-    char *identifier = let_stmt.name->string(let_stmt.name);
+    char *literal = TOKEN_LITERAL(stmt);
+    char *identifier = STRING(let_stmt.name);
+
     ds_append(dstring, literal);
     ds_append(dstring, " ");
     ds_append(dstring, identifier);
     ds_append(dstring, " = ");
     free(identifier);
 
-    // temporary
     if (let_stmt.value != NULL) {
-        char *value = let_stmt.value->string(let_stmt.value);
+        char *value = STRING(let_stmt.value);
         ds_append(dstring, value);
         free(value);
     }
@@ -62,58 +62,61 @@ statement_let_string (statement_t *stmt) {
 }
 
 void
-statement_let_destroy (statement_t *stmt) {
-	statement_let_t let_stmt = stmt->statement.let;
+stmt_let_destroy (stmt_t *stmt) {
+	stmt_let_t let_stmt = STMT_LET(stmt);
 
 	token_destroy(&let_stmt.token);
-	let_stmt.name->destroy(let_stmt.name);
     // temporary!
     if (let_stmt.value != NULL) {
-        let_stmt.value->destroy(let_stmt.value);
+        DESTROY(let_stmt.value);
     }
 	free(stmt);
 }
 
 
-statement_t *
-statement_return_create (token_t token, expression_t *value) {
-    statement_t *stmt = (statement_t *) malloc(sizeof(statement_t));
+stmt_t *
+stmt_return_create (token_t token, expr_t *value) {
+    stmt_t *stmt = (stmt_t *) malloc(sizeof(stmt_t));
     if (stmt == NULL) {
-        fprintf(stderr, "ERROR in 'statement_return_create': Failed to allocate 'stmt'!\n");
+        fprintf(
+            stderr, 
+            "ERROR in 'stmt_return_create': Failed to allocate 'stmt'!\n"
+        );
         exit(EXIT_FAILURE);
     }
 
     stmt->type = STATEMENT_RETURN;
-    stmt->statement.ret = (statement_return_t) {
+    STMT_RETURN(stmt) = (stmt_return_t) {
         .token = token_dup(token),
         .value = value
     };
 
-    stmt->token_literal = statement_return_token_literal;
-    stmt->string = statement_return_string;
-    stmt->destroy = statement_return_destroy;
+    stmt->token_literal = stmt_return_token_literal;
+    stmt->string = stmt_return_string;
+    stmt->destroy = stmt_return_destroy;
 
     return stmt;
 }
 
 
 char *
-statement_return_token_literal (statement_t *stmt) {
-    statement_return_t return_stmt = stmt->statement.ret;
+stmt_return_token_literal (stmt_t *stmt) {
+    stmt_return_t return_stmt = STMT_RETURN(stmt);
     return return_stmt.token.literal;
 }
 
 
 char *
-statement_return_string (statement_t *stmt) {
-    statement_return_t return_stmt = stmt->statement.ret;
+stmt_return_string (stmt_t *stmt) {
+    stmt_return_t return_stmt = STMT_RETURN(stmt);
     ds_t *dstring = ds_initialize();
 
-    char *literal = stmt->string(stmt);
+    char *literal = STRING(stmt);
     ds_append(dstring, literal);
+    ds_append(dstring, " ");
 
     if (return_stmt.value != NULL) {
-        char *value = return_stmt.value->string(return_stmt.value);
+        char *value = STRING(return_stmt.value);
         ds_append(dstring, value);    
     }
     ds_append(dstring, ";");
@@ -124,52 +127,55 @@ statement_return_string (statement_t *stmt) {
 
 
 void
-statement_return_destroy (statement_t *stmt) {
-    statement_return_t return_stmt = stmt->statement.ret;
+stmt_return_destroy (stmt_t *stmt) {
+    stmt_return_t return_stmt = STMT_RETURN(stmt);
 
     token_destroy(&return_stmt.token);
-    //return_stmt.value->destroy(return_stmt.value);
+    //DESTROY(return_stmt.value)
     free(stmt);
 }
 
 
-statement_t *   
-statement_expression_create (token_t token, expression_t *value) {
-    statement_t *stmt = (statement_t *) malloc(sizeof(statement_t));
+stmt_t *   
+stmt_expr_create (token_t token, expr_t *value) {
+    stmt_t *stmt = (stmt_t *) malloc(sizeof(stmt_t));
     if (stmt == NULL) {
-        fprintf(stderr, "ERROR in 'statement_expression_create': Failed to allocate 'stmt'!\n");
+        fprintf(
+            stderr, 
+            "ERROR in 'stmt_expr_create': Failed to allocate 'stmt'!\n"
+        );
         exit(EXIT_FAILURE);
     }
 
     stmt->type = STATEMENT_EXPRESSION;
-    stmt->statement.expr = (statement_expression_t) {
+    STMT_EXPR(stmt) = (stmt_expr_t) {
         .token = token_dup(token),
         .expr = value
     };
 
-    stmt->token_literal = statement_expression_token_literal;
-    stmt->string = statement_expression_string;
-    stmt->destroy = statement_expression_destroy;
+    stmt->token_literal = stmt_expr_token_literal;
+    stmt->string = stmt_expr_string;
+    stmt->destroy = stmt_expr_destroy;
 
     return stmt;
 }
 
 
 char *          
-statement_expression_token_literal (statement_t *stmt) {
-    statement_expression_t expr_stmt = stmt->statement.expr;
+stmt_expr_token_literal (stmt_t *stmt) {
+    stmt_expr_t expr_stmt = STMT_EXPR(stmt);
     return expr_stmt.token.literal;
 }
 
 
 char *
-statement_expression_string (statement_t *stmt) {
-    statement_expression_t expr_stmt = stmt->statement.expr;
+stmt_expr_string (stmt_t *stmt) {
+    stmt_expr_t expr_stmt = STMT_EXPR(stmt);
 
-    // temporary since we havent implemented expressions yet
+    // temporary since we havent implemented exprs yet
     if (expr_stmt.expr != NULL) {
-        expression_t *expr = expr_stmt.expr;
-        return expr->string(expr);
+        expr_t *expr = expr_stmt.expr;
+        return STRING(expr);
     }
 
     return NULL;
@@ -177,17 +183,17 @@ statement_expression_string (statement_t *stmt) {
 
 
 void            
-statement_expression_destroy (statement_t *stmt) {
-    statement_expression_t expr_stmt = stmt->statement.expr;
+stmt_expr_destroy (stmt_t *stmt) {
+    stmt_expr_t expr_stmt = STMT_EXPR(stmt);
     token_destroy(&expr_stmt.token);
-    expression_destroy(expr_stmt.expr);
+    DESTROY(expr_stmt.expr);
     free(stmt);
 }
 
 
 void
-statement_destroy (void *data) {
-	statement_t *stmt = (statement_t *) data;
+stmt_destroy (void *data) {
+	stmt_t *stmt = (stmt_t *) data;
 	stmt->destroy(stmt);	
 }
 

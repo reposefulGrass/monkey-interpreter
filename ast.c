@@ -26,7 +26,7 @@ ast_program_create () {
 
 void
 ast_program_destroy (program_t *program) {
-	ll_destroy(&program->statements, statement_destroy);
+	ll_destroy(&program->statements, stmt_destroy);
 	free(program);
 }
 
@@ -40,7 +40,7 @@ ast_program_string (program_t *program) {
 
     list cursor = NULL;
     while ((cursor = ll_iterator(program->statements, cursor)) != NULL) {
-        statement_t *stmt = (statement_t *) cursor->data;
+        stmt_t *stmt = (stmt_t *) cursor->data;
 
         char *temp = stmt->string(stmt);
         ll_append(&stmt_strings, (void *) temp);

@@ -16,7 +16,8 @@ struct parser {
 	token_t current_token;
 	token_t peek_token;
 
-	list errors;            // A list of error encountered during parsing
+    // A list of errors encountered during parsing
+	list errors;            
 };
 
 typedef enum {
@@ -29,40 +30,41 @@ typedef enum {
     PRECEDENCE_CALL,
 } precedence_t;
 
-parser_t *      parser_create 				        (lexer_t *l);
-void	        parser_destroy				        (parser_t *p);
-void	  	    parser_next_token	 		        (parser_t *p);
+parser_t *      parser_create 				    (lexer_t *l);
+void	        parser_destroy				    (parser_t *p);
+void	  	    parser_next_token	 		    (parser_t *p);
 
-program_t *     parser_parse_program 		        (parser_t *p);
+program_t *     parser_parse_program 		    (parser_t *p);
 
-statement_t *   parser_parse_statement 	            (parser_t *p);
-statement_t *   parser_parse_statement_let          (parser_t *p);
-statement_t *   parser_parse_statement_return       (parser_t *p);
-statement_t *   parser_parse_statement_expression   (parser_t *p);
+stmt_t *        parser_parse_stmt 	            (parser_t *p);
+stmt_t *        parser_parse_stmt_let           (parser_t *p);
+stmt_t *        parser_parse_stmt_return        (parser_t *p);
+stmt_t *        parser_parse_stmt_expr          (parser_t *p);
 
-expression_t *  parser_parse_expression             (parser_t *p, precedence_t prec);
-expression_t *  parser_parse_expression_identifier  (parser_t *p);
-expression_t *  parser_parse_expression_number      (parser_t *p);
-expression_t *  parser_parse_expression_prefix      (parser_t *p);
-expression_t *  parser_parse_expression_infix       (parser_t *p, expression_t *left);
+expr_t *        parser_parse_expr               (parser_t *p, precedence_t prec);
+expr_t *        parser_parse_expr_identifier    (parser_t *p);
+expr_t *        parser_parse_expr_number        (parser_t *p);
+expr_t *        parser_parse_expr_prefix        (parser_t *p);
+expr_t *        parser_parse_expr_infix         (parser_t *p, expr_t *left);
 
-bool		    parser_current_token_is	            (parser_t *p, tokentype_t t);
-bool		    parser_peek_token_is 		        (parser_t *p, tokentype_t t);
-bool		    parser_expect_peek			        (parser_t *p, tokentype_t t);
+bool		    parser_current_token_is	        (parser_t *p, tokentype_t t);
+bool		    parser_peek_token_is 		    (parser_t *p, tokentype_t t);
+bool		    parser_expect_peek			    (parser_t *p, tokentype_t t);
 
-void            parser_invalid_number_error         (parser_t *parser);
-void            parser_no_prefix_fn_error           (parser_t *parser);
-void 		    parser_peek_error 			        (parser_t *p, tokentype_t type);
-bool		    parser_check_errors		            (parser_t *p);
+void            parser_invalid_number_error     (parser_t *parser);
+void            parser_no_prefix_fn_error       (parser_t *parser);
+void 		    parser_peek_error 			    (parser_t *p, tokentype_t type);
+bool		    parser_check_errors		        (parser_t *p);
 
-precedence_t    parser_get_precedence               (tokentype_t type);
-precedence_t    parser_curr_precedence              (parser_t *parser);
-precedence_t    parser_peek_precedence              (parser_t *parser);
+precedence_t    parser_get_precedence           (tokentype_t type);
+precedence_t    parser_curr_precedence          (parser_t *parser);
+precedence_t    parser_peek_precedence          (parser_t *parser);
 
-typedef expression_t * (*fn_ptr)(); // fn_ptr is pointer to a function
+// expr_fn_ptr is pointer to a function that has the return-type of 'expr_t *'
+typedef expr_t * (*expr_fn_ptr)(); 
 
-fn_ptr          parser_get_prefix_fn            (tokentype_t type);
-fn_ptr          parser_get_infix_fn             (tokentype_t type);
+expr_fn_ptr     parser_get_prefix_fn            (tokentype_t type);
+expr_fn_ptr     parser_get_infix_fn             (tokentype_t type);
 
 
 #endif /* PARSER_H */

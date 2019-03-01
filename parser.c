@@ -53,7 +53,7 @@ parser_parse_program (parser_t *p) {
 	program_t *program = ast_program_create();
 
 	while (p->current_token.type != TOKEN_EOF) {
-		statement_t *stmt = parser_parse_statement(p);
+		stmt_t *stmt = parser_parse_stmt(p);
 		if (stmt != NULL) {
 			ll_append(&program->statements, (void *) stmt);
 		}
@@ -63,40 +63,41 @@ parser_parse_program (parser_t *p) {
 	return program;
 }
 
-statement_t *
-parser_parse_statement (parser_t *p) {
+stmt_t *
+parser_parse_stmt (parser_t *p) {
 	switch (p->current_token.type) {
 		case TOKEN_LET:
-			return parser_parse_statement_let(p);
+			return parser_parse_stmt_let(p);
 
 		case TOKEN_RETURN:
-            return parser_parse_statement_return(p);
+            return parser_parse_stmt_return(p);
 
 		default:
-            return parser_parse_statement_expression(p);
+            return parser_parse_stmt_expr(p);
 	}
 } 
 
 
-statement_t *
-parser_parse_statement_let (parser_t *p) {
+stmt_t *
+parser_parse_stmt_let (parser_t *p) {
     token_t let_token = token_dup(p->current_token);
     token_t ident_token = token_dup(p->peek_token);
 
     if (!parser_expect_peek(p, TOKEN_IDENT) || !parser_expect_peek(p, TOKEN_ASSIGN)) {
+        // TODO: error handling here?
         return NULL;
     }
 
-    expression_t *identifier = expression_identifier_create(ident_token); 
+    expr_t *identifier = expr_identifier_create(ident_token); 
 
     // temporarily skip value
 	while (!parser_current_token_is(p, TOKEN_SEMICOLON)) {
 		parser_next_token(p);
 	}
 
-    expression_t *value = NULL;
+    expr_t *value = NULL;
 
-    statement_t *let_stmt = statement_let_create(let_token, identifier, value);
+    stmt_t *let_stmt = stmt_let_create(let_token, identifier, value);
     token_destroy(&let_token);
     token_destroy(&ident_token);
 
@@ -104,8 +105,8 @@ parser_parse_statement_let (parser_t *p) {
 }
 
 
-statement_t *
-parser_parse_statement_return (parser_t *p) {
+stmt_t *
+parser_parse_stmt_return (parser_t *p) {
     token_t return_token = token_dup(p->current_token);    
 
     // temporarily skip value
@@ -113,19 +114,19 @@ parser_parse_statement_return (parser_t *p) {
         parser_next_token(p);
     }
 
-    expression_t *value = NULL;
+    expr_t *value = NULL;
 
-    statement_t *ret_stmt = statement_return_create(return_token, value);
+    stmt_t *ret_stmt = stmt_return_create(return_token, value);
     token_destroy(&return_token);
 
     return ret_stmt;
 }
 
 
-statement_t *
-parser_parse_statement_expression (parser_t *parser) {
+stmt_t *
+parser_parse_stmt_expr (parser_t *parser) {
     token_t expr_token = token_dup(parser->current_token);
-    expression_t *expr = parser_parse_expression(parser, PRECEDENCE_LOWEST);
+    expr_t *expr = parser_parse_expr(parser, PRECEDENCE_LOWEST);
 
     if (expr == NULL) {
         token_destroy(&expr_token);
@@ -136,27 +137,38 @@ parser_parse_statement_expression (parser_t *parser) {
         parser_next_token(parser); 
     }
 
-    statement_t *expr_stmt = statement_expression_create(expr_token, expr);
+    stmt_t *expr_stmt = stmt_expr_create(expr_token, expr);
     token_destroy(&expr_token);
 
     return expr_stmt;
 }
 
-expression_t *  
-parser_parse_expression (parser_t *parser, precedence_t precedence) {
-    fn_ptr prefix = parser_get_prefix_fn(parser->current_token.type);     
+
+/* First, parse it as a prefix expression. Then check if the peek (next) 
+ * token is an infix expression. 
+ *
+ * If it is an infix expression, 
+ *      parse and return the entire expression as an infix expression. 
+ * Else 
+ *      return the already parsed prefix expression
+*/
+expr_t *  
+parser_parse_expr (parser_t *parser, precedence_t precedence) {
+    expr_fn_ptr prefix = parser_get_prefix_fn(parser->current_token.type);     
     if (prefix == NULL) {
         parser_no_prefix_fn_error(parser);
         return NULL; 
     }
-    expression_t *left_expr = prefix(parser);
+    expr_t *left_expr = prefix(parser);
 
     while (
         !parser_peek_token_is(parser, TOKEN_SEMICOLON) && 
         precedence < parser_peek_precedence(parser)
     ) {
-        fn_ptr infix = parser_get_infix_fn(parser->peek_token.type);
+        expr_fn_ptr infix = parser_get_infix_fn(parser->peek_token.type);
         if (infix == NULL) {
+            // since an infix function was not found for peek_token, 
+            // this expr is not an infix expr, so return it as a prefix expr.
             return left_expr;
         }
         
@@ -184,25 +196,25 @@ parser_get_precedence (tokentype_t type) {
     return PRECEDENCE_LOWEST;
 }
 
-fn_ptr          
+expr_fn_ptr          
 parser_get_prefix_fn (tokentype_t type) {
     switch (type) {
         case TOKEN_IDENT:
-            return parser_parse_expression_identifier;
+            return parser_parse_expr_identifier;
 
         case TOKEN_NUMBER: 
-            return parser_parse_expression_number;
+            return parser_parse_expr_number;
 
         case TOKEN_BANG:
         case TOKEN_MINUS:
-            return parser_parse_expression_prefix;
+            return parser_parse_expr_prefix;
 
         default:
             return NULL;
     } 
 }
 
-fn_ptr
+expr_fn_ptr
 parser_get_infix_fn (tokentype_t type) {
     switch (type) {
         case TOKEN_PLUS:
@@ -213,7 +225,7 @@ parser_get_infix_fn (tokentype_t type) {
         case TOKEN_NEQ:
         case TOKEN_LT:
         case TOKEN_GT:
-            return parser_parse_expression_infix;
+            return parser_parse_expr_infix;
 
         default:
             return NULL;
@@ -221,13 +233,13 @@ parser_get_infix_fn (tokentype_t type) {
 }
 
 
-expression_t *
-parser_parse_expression_identifier (parser_t *parser) {
-    return expression_identifier_create(parser->current_token);
+expr_t *
+parser_parse_expr_identifier (parser_t *parser) {
+    return expr_identifier_create(parser->current_token);
 }
 
-expression_t *  
-parser_parse_expression_number (parser_t *parser) {
+expr_t *  
+parser_parse_expr_number (parser_t *parser) {
     token_t curr_token = parser->current_token;
 
     long number = strtol(curr_token.literal, NULL, 10);
@@ -236,34 +248,37 @@ parser_parse_expression_number (parser_t *parser) {
         return NULL;
     }
 
-    return expression_number_create(curr_token, number);
+    return expr_number_create(curr_token, number);
 }
 
 
-expression_t *
-parser_parse_expression_prefix (parser_t *parser) {
+expr_t *
+parser_parse_expr_prefix (parser_t *parser) {
     token_t curr_token = token_dup(parser->current_token);
     char *operator = curr_token.literal;
 
     parser_next_token(parser);
-    expression_t *right = parser_parse_expression(parser, PRECEDENCE_PREFIX);
+    expr_t *right = parser_parse_expr(parser, PRECEDENCE_PREFIX);
 
-    expression_t *prefix_expr =  expression_prefix_create(curr_token, operator, right);
+    expr_t *prefix_expr =  expr_prefix_create(curr_token, operator, right);
     token_destroy(&curr_token);
     return prefix_expr;
 }
 
 
-expression_t *
-parser_parse_expression_infix (parser_t *parser, expression_t *left_expr) {
+/* Given the left side expression 'left_expr', 
+ * parse the right side expr and combine them into one infix expression.
+*/
+expr_t *
+parser_parse_expr_infix (parser_t *parser, expr_t *left_expr) {
     token_t curr_token = token_dup(parser->current_token);
     char *operator = curr_token.literal;
 
     precedence_t prec = parser_curr_precedence(parser);
     parser_next_token(parser);
-    expression_t *right_expr = parser_parse_expression(parser, prec);
+    expr_t *right_expr = parser_parse_expr(parser, prec);
 
-    expression_t *infix_expr = expression_infix_create(curr_token, operator, left_expr, right_expr);
+    expr_t *infix_expr = expr_infix_create(curr_token, operator, left_expr, right_expr);
     token_destroy(&curr_token);
     return infix_expr;
 }
@@ -307,7 +322,6 @@ parser_expect_peek (parser_t *p, tokentype_t type) {
 
 void
 parser_invalid_number_error (parser_t *parser) {
-    // create error message
     char *error_msg = 
 	    "Error at " YELLOW "|%d:%d| " RESET "Expected a number in the range of %d to %d!\n";
 
@@ -317,7 +331,10 @@ parser_invalid_number_error (parser_t *parser) {
 
     char *error = (char *) malloc(sizeof(char) * error_msg_len);
     if (error == NULL) {
-        fprintf(stderr, "ERROR in 'parser_invalid_number_error': Failed to allocate 'error'!\n");
+        fprintf(
+            stderr, 
+            "ERROR in 'parser_invalid_number_error': Failed to allocate 'error'!\n"
+        );
         exit(EXIT_FAILURE);
     }
 
@@ -355,7 +372,6 @@ parser_no_prefix_fn_error (parser_t *parser) {
         error, error_msg_len, error_msg, 
         parser->current_token.line, parser->current_token.position, typename
     ); 
-
     ll_append(&parser->errors, error);
 }
 
@@ -382,16 +398,9 @@ parser_peek_error (parser_t *p, tokentype_t type) {
     }
 
 	snprintf(
-		error,
-		error_msg_len,
-		error_msg,
-
-		p->peek_token.line,
-		p->peek_token.position,
-		curr_type,
-		peek_type
+        error, error_msg_len, error_msg,
+        p->peek_token.line, p->peek_token.position, curr_type, peek_type
 	);
-
 	ll_append(&p->errors, error);
 }
 
