@@ -6,8 +6,8 @@ The Monkey programming language is a fictional language that is
 used in the book |Writing An Interpreter in Go|.
 
 I use several personal auxillary libraries:
-    * linked_list - To construct a list of statements.
-    * dynamic_string - For creating strings that can grow easily.
+* linked_list - To construct a list of statements.
+* dynamic_string - For creating strings that can grow easily.
 
 # Why
 
