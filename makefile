@@ -43,6 +43,7 @@ parser.o : parser.c parser.h
 
 clean : 
 	@cd linked_list && make clean $(MAKE_FLAGS) && cd ..
+	@cd dynamic_string && make clean $(MAKE_FLAGS) && cd ..
 	@echo 'Removing test and all object files'
 	@rm -f monkey test *.o 
 

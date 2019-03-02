@@ -69,55 +69,57 @@ test_expr_string () {
     bool passed = true;
 
     expr_test_t tests[] = {
-        {
+        { // test #0
             "-a * b",
             "((-a) * b)" 
         },
-        {
+        { // test #1
             "!-a",
             "(!(-a))" 
         },
-        {
+        { // test #2
             "a + b + c",
             "((a + b) + c)" 
         },
-        {
+        { // test #3
             "a + b - c",
             "((a + b) - c)" 
         },
-        {
+        { // test #4
             "a * b * c",
             "((a * b) * c)" 
         },
-        {
+        { // test #5
             "a * b / c", 
             "((a * b) / c)"
         },
-        {
+        { // test #6
             "a + b / c",
             "(a + (b / c))" 
         },
-        {
+        { // test #7
             "a + b * c + d / e - f",
             "(((a + (b * c)) + (d / e)) - f)" 
         },
-        {
+        { // test #8
             "3 + 4; -5 * 5",
             "(3 + 4)((-5) * 5)"
         },
-        {
+        { // test #9
             "5 > 4 == 3 < 4",
             "((5 > 4) == (3 < 4))"
         },
-        {
+        { // test #10
             "5 < 4 != 3 < 4",
             "((5 < 4) != (3 < 4))" 
         },
-        {
+        { // test #11
             "3 + 4 * 5 == 3 * 1 + 4 * 5",
             "((3 + (4 * 5)) == ((3 * 1) + (4 * 5)))" 
         },
     };
+
+    printf("==== [Test] 'expr_string' ====\n");
 
     int size = sizeof(tests) / sizeof(expr_test_t);
     for (int i = 0; i < size; i++) {
@@ -129,10 +131,11 @@ test_expr_string () {
         parser_t *parser = parser_create(lexer);
         program_t *program = parser_parse_program(parser);
 
-        CHECK_PARSER_ERRORS(parser, expr_string_end)
-        CHECK_PROGRAM_NOT_NULL(program, expr_string_end)
+        TEST_CHECK_PARSER_ERRORS(parser, expr_string_end)
+        TEST_CHECK_PROGRAM_NOT_NULL(program, expr_string_end)
 
         char *actual = ast_program_string(program);
+        //printf("  %s\n", actual);
         if (strcmp(actual, test.expected) != 0) {
             printf("Error: Expected '%s', got '%s' instead.\n", test.expected, actual);
         } 
@@ -143,10 +146,10 @@ expr_string_end:
         parser_destroy(parser); 
 
         if (passed == false) {
-            printf("Test #%d has failed!\n", i);
+            printf("  Test #%d has failed!\n", i);
         }
         else {
-            printf("Test #%d has passed!\n", i);
+            printf("  Test #%d has passed!\n", i);
         }
     }
 }
@@ -163,15 +166,17 @@ test_infix_expr () {
     bool passed = true;
 
     infix_test_t tests[] = {
-        {"5 + 5;", 5, "+", 5},
-        {"5 - 5;", 5, "-", 5},
-        {"5 * 5;", 5, "*", 5},
-        {"5 / 5;", 5, "/", 5},
-        {"5 > 5;", 5, ">", 5},
-        {"5 < 5;", 5, "<", 5},
-        {"5 == 5;", 5, "==", 5},
-        {"5 != 5;", 5, "!=", 5},
+        /* Test #0 */ {"5 + 5;",  5, "+",  5},
+        /* Test #1 */ {"5 - 5;",  5, "-",  5},
+        /* Test #2 */ {"5 * 5;",  5, "*",  5},
+        /* Test #3 */ {"5 / 5;",  5, "/",  5},
+        /* Test #4 */ {"5 > 5;",  5, ">",  5},
+        /* Test #5 */ {"5 < 5;",  5, "<",  5},
+        /* Test #6 */ {"5 == 5;", 5, "==", 5},
+        /* Test #7 */ {"5 != 5;", 5, "!=", 5},
     };
+
+    printf("==== [Test] 'infix_expr' ====\n");
 
     int size = sizeof(tests) / sizeof(infix_test_t);
     for (int index = 0; index < size; index++) {
@@ -183,16 +188,16 @@ test_infix_expr () {
         parser_t *parser = parser_create(lexer);
         program_t *program = parser_parse_program(parser);
 
-        CHECK_PARSER_ERRORS(parser, infix_expr_end)
-        CHECK_PROGRAM_NOT_NULL(program, infix_expr_end)
-        CHECK_LIST_LEN(program->statements, 1, infix_expr_end)
+        TEST_CHECK_PARSER_ERRORS(parser, infix_expr_end)
+        TEST_CHECK_PROGRAM_NOT_NULL(program, infix_expr_end)
+        TEST_CHECK_LIST_LEN(program->statements, 1, infix_expr_end)
 
         stmt_t *stmt = (stmt_t *) program->statements->data;
-        CHECK_STATEMENT_TYPE(stmt->type, STATEMENT_EXPRESSION, goto infix_expr_end)
+        TEST_CHECK_STATEMENT_TYPE(stmt->type, STATEMENT_EXPRESSION, goto infix_expr_end)
 
         stmt_expr_t expr_stmt = STMT_EXPR(stmt);
         expr_t *expr = expr_stmt.expr;
-        CHECK_EXPRESSION_TYPE(expr->type, EXPRESSION_INFIX, goto infix_expr_end)
+        TEST_CHECK_EXPRESSION_TYPE(expr->type, EXPRESSION_INFIX, goto infix_expr_end)
 
         infix_t infix = EXPR_INFIX(expr);
 
@@ -214,10 +219,10 @@ infix_expr_end:
         parser_destroy(parser); 
 
         if (passed == false) {
-            printf("Test #%d has failed!\n", index);
+            printf("  Test #%d has failed!\n", index);
         }
         else {
-            printf("Test #%d has passed!\n", index);
+            printf("  Test #%d has passed!\n", index);
         }
     }
 }
@@ -233,13 +238,14 @@ test_prefix_expr () {
     bool passed = true;
 
     prefix_test_t tests[] = {
-        {"!5;", "!", 5},
-        {"-15;", "-", 15}
+        /* Test #0 */ {"!5;",  "!",  5},
+        /* Test #1 */ {"-15;", "-", 15}
     };
+
+    printf("==== [Test] 'prefix_expr' ====\n");
 
     int size = sizeof(tests) / sizeof(prefix_test_t);
     for (int index = 0; index < size; index++) {
-        printf("==== TEST #%d ====\n", index);
         prefix_test_t test = tests[index];
 
         char *input = strdup(test.input);
@@ -248,16 +254,16 @@ test_prefix_expr () {
         parser_t *parser = parser_create(lexer);
         program_t *program = parser_parse_program(parser);
 
-        CHECK_PARSER_ERRORS(parser, pe_free_resources)
-        CHECK_PROGRAM_NOT_NULL(program, pe_free_resources)
-        CHECK_LIST_LEN(program->statements, 1, pe_free_resources)
+        TEST_CHECK_PARSER_ERRORS(parser, pe_free_resources)
+        TEST_CHECK_PROGRAM_NOT_NULL(program, pe_free_resources)
+        TEST_CHECK_LIST_LEN(program->statements, 1, pe_free_resources)
 
         stmt_t *stmt = (stmt_t *) program->statements->data;
-        CHECK_STATEMENT_TYPE(stmt->type, STATEMENT_EXPRESSION, goto pe_free_resources)
+        TEST_CHECK_STATEMENT_TYPE(stmt->type, STATEMENT_EXPRESSION, goto pe_free_resources)
 
         stmt_expr_t expr_stmt = STMT_EXPR(stmt);
         expr_t *expr = expr_stmt.expr;
-        CHECK_EXPRESSION_TYPE(expr->type, EXPRESSION_PREFIX, goto pe_free_resources)
+        TEST_CHECK_EXPRESSION_TYPE(expr->type, EXPRESSION_PREFIX, goto pe_free_resources)
 
         prefix_t prefix = EXPR_PREFIX(expr);
         if (strcmp(prefix.operator, test.operator) != 0) {
@@ -275,10 +281,10 @@ pe_free_resources:
         parser_destroy(parser); 
 
         if (passed == false) {
-            printf("Test #%d has failed!\n\n", index);
+            printf("  Test #%d has failed!\n", index);
         }
         else {
-            printf("Test #%d has passed!\n\n", index);
+            printf("  Test #%d has passed!\n", index);
         }
     }
 }
@@ -293,16 +299,16 @@ test_number_expr () {
     parser_t *parser = parser_create(lexer);
     program_t *program = parser_parse_program(parser);
 
-    CHECK_PARSER_ERRORS(parser, ne_free_resources)
-    CHECK_PROGRAM_NOT_NULL(program, ne_free_resources)
-    CHECK_LIST_LEN(program->statements, 1, ne_free_resources)
+    TEST_CHECK_PARSER_ERRORS(parser, ne_free_resources)
+    TEST_CHECK_PROGRAM_NOT_NULL(program, ne_free_resources)
+    TEST_CHECK_LIST_LEN(program->statements, 1, ne_free_resources)
 
     stmt_t *stmt = (stmt_t *) program->statements->data;
-    CHECK_STATEMENT_TYPE(stmt->type, STATEMENT_EXPRESSION, goto ne_free_resources)
+    TEST_CHECK_STATEMENT_TYPE(stmt->type, STATEMENT_EXPRESSION, goto ne_free_resources)
 
     stmt_expr_t expr_stmt = STMT_EXPR(stmt);
     expr_t *expr = expr_stmt.expr;
-    CHECK_EXPRESSION_TYPE(expr->type, EXPRESSION_NUMBER, goto ne_free_resources);
+    TEST_CHECK_EXPRESSION_TYPE(expr->type, EXPRESSION_NUMBER, goto ne_free_resources);
 
     number_t ident = EXPR_NUMBER(expr);
     int expected_value = 5;
@@ -319,10 +325,10 @@ ne_free_resources:
     parser_destroy(parser); 
     
     if (passed == false) {
-        printf("The test 'number_expr' has failed!\n");
+        printf("Test 'number_expr' has failed!\n");
     }
     else {
-        printf("The test 'number_expr' has passed!\n");
+        printf("Test 'number_expr' has passed!\n");
     }    
 }
 
@@ -338,16 +344,16 @@ test_identifier_expr () {
     parser_t *parser = parser_create(lexer);
     program_t *program = parser_parse_program(parser);
 
-    CHECK_PARSER_ERRORS(parser, ie_free_resources)
-    CHECK_PROGRAM_NOT_NULL(program, ie_free_resources)
-    CHECK_LIST_LEN(program->statements, 1, ie_free_resources)
+    TEST_CHECK_PARSER_ERRORS(parser, ie_free_resources)
+    TEST_CHECK_PROGRAM_NOT_NULL(program, ie_free_resources)
+    TEST_CHECK_LIST_LEN(program->statements, 1, ie_free_resources)
 
     stmt_t *stmt = (stmt_t *) program->statements->data;
-    CHECK_STATEMENT_TYPE(stmt->type, STATEMENT_EXPRESSION, goto ie_free_resources)
+    TEST_CHECK_STATEMENT_TYPE(stmt->type, STATEMENT_EXPRESSION, goto ie_free_resources)
 
     stmt_expr_t expr_stmt = STMT_EXPR(stmt);
     expr_t *expr = expr_stmt.expr;
-    CHECK_EXPRESSION_TYPE(expr->type, EXPRESSION_IDENTIFIER, goto ie_free_resources)
+    TEST_CHECK_EXPRESSION_TYPE(expr->type, EXPRESSION_IDENTIFIER, goto ie_free_resources)
 
     identifier_t ident = EXPR_IDENT(expr);
     char *expected_value = "foobar";
@@ -364,10 +370,10 @@ ie_free_resources:
     parser_destroy(parser); 
     
     if (passed == false) {
-        printf("The test 'identifier_expr' has failed!\n");
+        printf("Test 'identifier_expr' has failed!\n");
     }
     else {
-        printf("The test 'identifier_expr' has passed!\n");
+        printf("Test 'identifier_expr' has passed!\n");
     }    
 }
 
@@ -423,15 +429,15 @@ test_return_stmts() {
 	parser_t *parser = parser_create(lexer);
 	program_t *program = parser_parse_program(parser);
 
-    CHECK_PARSER_ERRORS(parser, rs_free_resources)
-    CHECK_PROGRAM_NOT_NULL(program, rs_free_resources)
-    CHECK_LIST_LEN(program->statements, 3, rs_free_resources)
+    TEST_CHECK_PARSER_ERRORS(parser, rs_free_resources)
+    TEST_CHECK_PROGRAM_NOT_NULL(program, rs_free_resources)
+    TEST_CHECK_LIST_LEN(program->statements, 3, rs_free_resources)
 
 	list cursor = NULL;
 	while ((cursor = ll_iterator(program->statements, cursor)) != NULL) {
 		stmt_t *stmt = (stmt_t *) cursor->data;
 
-        CHECK_STATEMENT_TYPE(stmt->type, STATEMENT_RETURN, continue)
+        TEST_CHECK_STATEMENT_TYPE(stmt->type, STATEMENT_RETURN, continue)
 
         if (strcmp(stmt->token_literal(stmt), "return") != 0) {
             passed = false;
@@ -500,9 +506,9 @@ test_let_stmts() {
 	parser_t *parser = parser_create(lexer);
 	program_t *program = parser_parse_program(parser);
 
-    CHECK_PARSER_ERRORS(parser, ls_free_resources)
-    CHECK_PROGRAM_NOT_NULL(program, ls_free_resources)
-    CHECK_LIST_LEN(program->statements, 3, ls_free_resources)
+    TEST_CHECK_PARSER_ERRORS(parser, ls_free_resources)
+    TEST_CHECK_PROGRAM_NOT_NULL(program, ls_free_resources)
+    TEST_CHECK_LIST_LEN(program->statements, 3, ls_free_resources)
 
 	char *tests[] = {
 		"x",

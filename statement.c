@@ -43,7 +43,7 @@ stmt_let_token_literal (stmt_t *stmt) {
 char *
 stmt_let_string (stmt_t *stmt) {
     stmt_let_t let_stmt = STMT_LET(stmt);
-    ds_t *dstring = ds_initialize();
+    dstr_t *dstring = ds_initialize();
 
     char *literal = TOKEN_LITERAL(stmt);
     char *identifier = STRING(let_stmt.name);
@@ -61,7 +61,7 @@ stmt_let_string (stmt_t *stmt) {
     }
     ds_append(dstring, ";");
 
-    char *ret_str = ds_to_string(dstring);
+    char *ret_str = ds_to_string(&dstring);
     return ret_str;
 }
 
@@ -115,7 +115,7 @@ stmt_return_token_literal (stmt_t *stmt) {
 char *
 stmt_return_string (stmt_t *stmt) {
     stmt_return_t return_stmt = STMT_RETURN(stmt);
-    ds_t *dstring = ds_initialize();
+    dstr_t *dstring = ds_initialize();
 
     char *literal = STRING(stmt);
     ds_append(dstring, literal);
@@ -127,7 +127,7 @@ stmt_return_string (stmt_t *stmt) {
     }
     ds_append(dstring, ";");
 
-    char *string = ds_to_string(dstring);
+    char *string = ds_to_string(&dstring);
     return string;
 }
 

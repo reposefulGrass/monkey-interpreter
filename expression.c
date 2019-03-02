@@ -132,7 +132,7 @@ expr_prefix_token_literal (expr_t *expr) {
 char *          
 expr_prefix_string (expr_t *expr) {
     prefix_t prefix = EXPR_PREFIX(expr);
-    ds_t *dstring = ds_initialize();
+    dstr_t *dstring = ds_initialize();
 
     char *value = STRING(prefix.expr);
 
@@ -141,7 +141,7 @@ expr_prefix_string (expr_t *expr) {
     ds_append(dstring, value);
     ds_append(dstring, ")");
 
-    char *string = ds_to_string(dstring);
+    char *string = ds_to_string(&dstring);
     free(value);
     return string;
 }
@@ -157,7 +157,7 @@ expr_prefix_destroy (expr_t *expr) {
     free(expr);
 }
 
-// ======== INFIX =======
+// ======== INFIX ========
 
 expr_t *  
 expr_infix_create (token_t token, char *op, expr_t *left_expr, expr_t *right_expr) {
@@ -193,7 +193,7 @@ expr_infix_token_literal (expr_t *expr) {
 char *          
 expr_infix_string (expr_t *expr) {
     infix_t infix = EXPR_INFIX(expr);
-    ds_t *dstring = ds_initialize();
+    dstr_t *dstring = ds_initialize();
 
     char *left = STRING(infix.left_expr);
     char *right = STRING(infix.right_expr);
@@ -206,7 +206,7 @@ expr_infix_string (expr_t *expr) {
     ds_append(dstring, right);
     ds_append(dstring, ")");
 
-    char *string = ds_to_string(dstring);
+    char *string = ds_to_string(&dstring);
     free(left);
     free(right);
     return string;

@@ -39,7 +39,6 @@ token_name (tokentype_t token) {
 	return token_names[token];
 }
 
-// destroy with 'token_destroy()'
 token_t
 token_create (tokentype_t type, char *ch, unsigned int pos, unsigned int line) {
 	token_t token = {

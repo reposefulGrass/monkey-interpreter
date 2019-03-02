@@ -5,13 +5,13 @@
 #include "dynamic_string.h"
 
 
-ds_t *
+dstr_t *
 ds_initialize_with (unsigned int capacity) {
-    ds_t *str = (ds_t *) malloc(sizeof(ds_t));
+    dstr_t *str = (dstr_t *) malloc(sizeof(dstr_t));
     if (str == NULL) {
         fprintf(
             stderr, 
-            "Error in function 'ds_initialize': Unable to allocate ds_t 'str'!\n"
+            "Error in function 'ds_initialize': Unable to allocate dstr_t 'str'!\n"
         );
         exit(EXIT_FAILURE);
     }
@@ -27,14 +27,14 @@ ds_initialize_with (unsigned int capacity) {
 }
 
 
-ds_t *
+dstr_t *
 ds_initialize () {
     return ds_initialize_with(DS_INITIAL_CAPACITY);
 }
 
 
 void
-ds_append (ds_t *str, char *s) {
+ds_append (dstr_t *str, char *s) {
     int length = strlen(s);
 
     int new_capacity = str->capacity;
@@ -46,7 +46,7 @@ ds_append (ds_t *str, char *s) {
     if (str->string == NULL) {
         fprintf(
             stderr, 
-            "Error in function 'ds_append': Unable to reallocate ds_t 'str'!\n"
+            "Error in function 'ds_append': Unable to reallocate dstr_t 'str'!\n"
         );
         exit(EXIT_FAILURE);
     }
@@ -58,16 +58,18 @@ ds_append (ds_t *str, char *s) {
 }
 
 
+// set 'str' to NULL?
 char *
-ds_to_string (ds_t *str) {
-    char *string = str->string;
-    free(str);
+ds_to_string (dstr_t **str) {
+    char *string = (*str)->string;
+    free(*str);
+    *str = NULL;
     return string;
 }
 
 
 void    
-ds_destroy (ds_t *str) {
+ds_destroy (dstr_t *str) {
     free(str->string);
     free(str);
 }

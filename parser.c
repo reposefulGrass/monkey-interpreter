@@ -148,7 +148,7 @@ parser_parse_stmt_expr (parser_t *parser) {
 
 
 /* First, parse it as a prefix expression. Then check if the peek (next) 
- * token is an infix expression. 
+ * token is an operator of an infix expression. 
  *
  * If it is an infix expression, 
  *      parse and return the entire expression as an infix expression. 
@@ -194,6 +194,7 @@ parser_get_precedence (tokentype_t type) {
         case TOKEN_MINUS:       return PRECEDENCE_SUM;
         case TOKEN_SLASH:       return PRECEDENCE_PRODUCT;
         case TOKEN_ASTERISK:    return PRECEDENCE_PRODUCT;
+        case TOKEN_EOF:
         default:                return PRECEDENCE_LOWEST;
     }
 

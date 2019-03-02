@@ -12,13 +12,13 @@ typedef struct {
     char *string;
     int capacity;
     int size;    
-} ds_t;
+} dstr_t;
 
-ds_t   *ds_initialize ();
-ds_t   *ds_initialize_with (unsigned int capacity);
-void    ds_append (ds_t *str, char *s); 
-char   *ds_to_string (ds_t *str);
-void    ds_destroy (ds_t *str);
+dstr_t *ds_initialize ();
+dstr_t *ds_initialize_with (unsigned int capacity);
+void    ds_append (dstr_t *str, char *s); 
+char   *ds_to_string (dstr_t **str);
+void    ds_destroy (dstr_t *str);
 
 #endif 
 

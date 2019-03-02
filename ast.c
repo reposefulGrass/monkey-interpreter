@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "dynamic_string/dynamic_string.h"
 #include "ast.h"
 #include "statement.h"
 #include "expression.h"
@@ -30,36 +31,18 @@ ast_program_destroy (program_t *program) {
 	free(program);
 }
 
-
 char *
 ast_program_string (program_t *program) {
-    list stmt_strings;
-    int num_chars = 0;
-
-    ll_initialize(&stmt_strings);
+    dstr_t *program_string = ds_initialize();
 
     list cursor = NULL;
     while ((cursor = ll_iterator(program->statements, cursor)) != NULL) {
         stmt_t *stmt = (stmt_t *) cursor->data;
 
-        char *temp = stmt->string(stmt);
-        ll_append(&stmt_strings, (void *) temp);
-        num_chars += strlen(temp); 
+        char *str = STRING(stmt);
+        ds_append(program_string, str); 
     }
 
-    char *buffer = (char *) malloc(sizeof(char) * num_chars + 1);
-    if (buffer == NULL) {
-        fprintf(stderr, "ERROR in 'ast_program_string': Failed to allocate 'buffer'!");
-        exit(EXIT_FAILURE);
-    }
-    buffer[0] = '\0';
-
-    cursor = NULL;
-    while ((cursor = ll_iterator(stmt_strings, cursor)) != NULL) {
-        char *str = (char *) cursor->data;
-        strcat(buffer, str);
-    }
-
-    ll_destroy(&stmt_strings, free);
-    return buffer;
+    return ds_to_string(&program_string);
 }
+
