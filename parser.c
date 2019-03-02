@@ -33,12 +33,14 @@ parser_create (lexer_t *l) {
 	return p;
 }
 
+
 void
 parser_destroy (parser_t *p) {
 	ll_destroy(&p->errors, free);
 	lexer_destroy(p->lexer);
 	free(p);
 }
+
 
 void 
 parser_next_token (parser_t *p) {
@@ -48,6 +50,8 @@ parser_next_token (parser_t *p) {
 	p->peek_token = lexer_next_token(p->lexer);
 }
 
+
+/* Construct a linked list of statements (stmt_t). */
 program_t *
 parser_parse_program (parser_t *p) {
 	program_t *program = ast_program_create();
@@ -62,6 +66,7 @@ parser_parse_program (parser_t *p) {
 
 	return program;
 }
+
 
 stmt_t *
 parser_parse_stmt (parser_t *p) {
@@ -84,7 +89,6 @@ parser_parse_stmt_let (parser_t *p) {
     token_t ident_token = token_dup(p->peek_token);
 
     if (!parser_expect_peek(p, TOKEN_IDENT) || !parser_expect_peek(p, TOKEN_ASSIGN)) {
-        // TODO: error handling here?
         return NULL;
     }
 
@@ -139,7 +143,6 @@ parser_parse_stmt_expr (parser_t *parser) {
 
     stmt_t *expr_stmt = stmt_expr_create(expr_token, expr);
     token_destroy(&expr_token);
-
     return expr_stmt;
 }
 
@@ -179,6 +182,7 @@ parser_parse_expr (parser_t *parser, precedence_t precedence) {
     return left_expr;
 }
 
+
 precedence_t    
 parser_get_precedence (tokentype_t type) {
     switch (type) {
@@ -195,6 +199,7 @@ parser_get_precedence (tokentype_t type) {
 
     return PRECEDENCE_LOWEST;
 }
+
 
 expr_fn_ptr          
 parser_get_prefix_fn (tokentype_t type) {
@@ -214,6 +219,7 @@ parser_get_prefix_fn (tokentype_t type) {
     } 
 }
 
+
 expr_fn_ptr
 parser_get_infix_fn (tokentype_t type) {
     switch (type) {
@@ -232,11 +238,13 @@ parser_get_infix_fn (tokentype_t type) {
     }
 }
 
+// ======== PARSE EXPRESSION FUNCTIONS ========
 
 expr_t *
 parser_parse_expr_identifier (parser_t *parser) {
     return expr_identifier_create(parser->current_token);
 }
+
 
 expr_t *  
 parser_parse_expr_number (parser_t *parser) {
@@ -283,6 +291,7 @@ parser_parse_expr_infix (parser_t *parser, expr_t *left_expr) {
     return infix_expr;
 }
 
+// ======== HELPER FUNCTIONS ========
 
 precedence_t
 parser_curr_precedence (parser_t *parser) {
@@ -319,6 +328,7 @@ parser_expect_peek (parser_t *p, tokentype_t type) {
 	return false;
 }
 
+// ======== ERROR FUNCTIONS ========
 
 void
 parser_invalid_number_error (parser_t *parser) {
