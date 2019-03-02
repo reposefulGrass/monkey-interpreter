@@ -7,6 +7,9 @@
 #include "statement.h"
 #include "token.h"
 
+
+// ======== LET ========
+
 stmt_t *
 stmt_let_create (token_t token, expr_t *identifier, expr_t *value) {
     stmt_t *stmt = (stmt_t *) malloc(sizeof(stmt_t));
@@ -28,6 +31,7 @@ stmt_let_create (token_t token, expr_t *identifier, expr_t *value) {
 
     return stmt;
 }
+
 
 char *
 stmt_let_token_literal (stmt_t *stmt) {
@@ -61,6 +65,7 @@ stmt_let_string (stmt_t *stmt) {
     return ret_str;
 }
 
+
 void
 stmt_let_destroy (stmt_t *stmt) {
 	stmt_let_t let_stmt = STMT_LET(stmt);
@@ -73,6 +78,7 @@ stmt_let_destroy (stmt_t *stmt) {
 	free(stmt);
 }
 
+// ======== RETURN ========
 
 stmt_t *
 stmt_return_create (token_t token, expr_t *value) {
@@ -135,6 +141,7 @@ stmt_return_destroy (stmt_t *stmt) {
     free(stmt);
 }
 
+// ======== EXPR ========
 
 stmt_t *   
 stmt_expr_create (token_t token, expr_t *value) {

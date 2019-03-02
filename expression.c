@@ -7,6 +7,8 @@
 #include "expression.h"
 #include "token.h"
 
+// ======== IDENTIFIER ========
+
 expr_t *
 expr_identifier_create (token_t token) {
 	expr_t *expr = (expr_t *) malloc(sizeof(expr_t));
@@ -27,16 +29,19 @@ expr_identifier_create (token_t token) {
 	return expr;
 }
 
+
 char *
 expr_identifier_token_literal (expr_t *expr) {
 	identifier_t ident = EXPR_IDENT(expr);
 	return ident.token.literal;
 }
 
+
 char *
 expr_identifier_string (expr_t *expr) {
     return strdup(EXPR_IDENT(expr).value);
 }
+
 
 void
 expr_identifier_destroy (expr_t *expr) {
@@ -46,6 +51,8 @@ expr_identifier_destroy (expr_t *expr) {
     free(ident.value);
     free(expr);
 }
+
+// ======== NUMBER ========
 
 expr_t *  
 expr_number_create (token_t token, int value) {
@@ -67,17 +74,20 @@ expr_number_create (token_t token, int value) {
 	return expr;
 }
 
+
 char *          
 expr_number_token_literal (expr_t *expr) {
     number_t number = EXPR_NUMBER(expr);
     return number.token.literal;
 }
 
+
 char *          
 expr_number_string (expr_t *expr) {
     number_t number = EXPR_NUMBER(expr);
     return strdup(number.token.literal);
 }
+
 
 void            
 expr_number_destroy (expr_t *expr) {
@@ -86,6 +96,8 @@ expr_number_destroy (expr_t *expr) {
     token_destroy(&number.token);
     free(expr);
 }
+
+// ======== PREFIX ========
 
 expr_t *  
 expr_prefix_create (token_t token, char *op, expr_t *value) {
@@ -109,11 +121,13 @@ expr_prefix_create (token_t token, char *op, expr_t *value) {
     return expr;
 }
 
+
 char *  
 expr_prefix_token_literal (expr_t *expr) {
     prefix_t prefix = EXPR_PREFIX(expr);
     return prefix.token.literal;
 }
+
 
 char *          
 expr_prefix_string (expr_t *expr) {
@@ -132,6 +146,7 @@ expr_prefix_string (expr_t *expr) {
     return string;
 }
 
+
 void            
 expr_prefix_destroy (expr_t *expr) {
     prefix_t prefix = EXPR_PREFIX(expr);
@@ -141,6 +156,8 @@ expr_prefix_destroy (expr_t *expr) {
     DESTROY(prefix.expr);
     free(expr);
 }
+
+// ======== INFIX =======
 
 expr_t *  
 expr_infix_create (token_t token, char *op, expr_t *left_expr, expr_t *right_expr) {
@@ -165,11 +182,13 @@ expr_infix_create (token_t token, char *op, expr_t *left_expr, expr_t *right_exp
     return expr;
 }
 
+
 char *  
 expr_infix_token_literal (expr_t *expr) {
     infix_t infix = EXPR_INFIX(expr);
     return infix.token.literal;
 }
+
 
 char *          
 expr_infix_string (expr_t *expr) {
@@ -193,6 +212,7 @@ expr_infix_string (expr_t *expr) {
     return string;
 }
 
+
 void            
 expr_infix_destroy (expr_t *expr) {
     infix_t infix = EXPR_INFIX(expr);
@@ -202,11 +222,5 @@ expr_infix_destroy (expr_t *expr) {
     DESTROY(infix.left_expr);
     DESTROY(infix.right_expr);
     free(expr);
-}
-
-// remove? the DESTROY macro does this
-void
-expr_destroy (expr_t *expr) {
-    expr->destroy(expr); 
 }
 
