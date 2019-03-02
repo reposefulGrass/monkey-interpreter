@@ -35,8 +35,8 @@ stmt_let_create (token_t token, expr_t *identifier, expr_t *value) {
 
 char *
 stmt_let_token_literal (stmt_t *stmt) {
-	stmt_let_t let_stmt = STMT_LET(stmt);
-	return let_stmt.token.literal;
+    stmt_let_t let_stmt = STMT_LET(stmt);
+    return let_stmt.token.literal;
 }
 
 
@@ -68,14 +68,14 @@ stmt_let_string (stmt_t *stmt) {
 
 void
 stmt_let_destroy (stmt_t *stmt) {
-	stmt_let_t let_stmt = STMT_LET(stmt);
+    stmt_let_t let_stmt = STMT_LET(stmt);
 
-	token_destroy(&let_stmt.token);
+    token_destroy(&let_stmt.token);
     // temporary!
     if (let_stmt.value != NULL) {
         DESTROY(let_stmt.value);
     }
-	free(stmt);
+    free(stmt);
 }
 
 // ======== RETURN ========
@@ -200,8 +200,8 @@ stmt_expr_destroy (stmt_t *stmt) {
 
 void
 stmt_destroy (void *data) {
-	stmt_t *stmt = (stmt_t *) data;
-	stmt->destroy(stmt);	
+    stmt_t *stmt = (stmt_t *) data;
+    stmt->destroy(stmt);    
 }
 
 

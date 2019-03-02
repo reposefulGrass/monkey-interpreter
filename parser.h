@@ -11,13 +11,13 @@ typedef struct parser
     parser_t;
 
 struct parser {
-	lexer_t *lexer;
+    lexer_t *lexer;
 
-	token_t current_token;
-	token_t peek_token;
+    token_t current_token;
+    token_t peek_token;
 
     // A list of errors encountered during parsing
-	list errors;            
+    list errors;            
 };
 
 typedef enum {
@@ -30,13 +30,13 @@ typedef enum {
     PRECEDENCE_CALL,
 } precedence_t;
 
-parser_t *      parser_create 				    (lexer_t *l);
-void	        parser_destroy				    (parser_t *p);
-void	  	    parser_next_token	 		    (parser_t *p);
+parser_t *      parser_create                   (lexer_t *l);
+void            parser_destroy                  (parser_t *p);
+void            parser_next_token               (parser_t *p);
 
-program_t *     parser_parse_program 		    (parser_t *p);
+program_t *     parser_parse_program            (parser_t *p);
 
-stmt_t *        parser_parse_stmt 	            (parser_t *p);
+stmt_t *        parser_parse_stmt               (parser_t *p);
 stmt_t *        parser_parse_stmt_let           (parser_t *p);
 stmt_t *        parser_parse_stmt_return        (parser_t *p);
 stmt_t *        parser_parse_stmt_expr          (parser_t *p);
@@ -47,14 +47,14 @@ expr_t *        parser_parse_expr_number        (parser_t *p);
 expr_t *        parser_parse_expr_prefix        (parser_t *p);
 expr_t *        parser_parse_expr_infix         (parser_t *p, expr_t *left);
 
-bool		    parser_current_token_is	        (parser_t *p, tokentype_t t);
-bool		    parser_peek_token_is 		    (parser_t *p, tokentype_t t);
-bool		    parser_expect_peek			    (parser_t *p, tokentype_t t);
+bool            parser_current_token_is         (parser_t *p, tokentype_t t);
+bool            parser_peek_token_is            (parser_t *p, tokentype_t t);
+bool            parser_expect_peek              (parser_t *p, tokentype_t t);
 
 void            parser_invalid_number_error     (parser_t *parser);
 void            parser_no_prefix_fn_error       (parser_t *parser);
-void 		    parser_peek_error 			    (parser_t *p, tokentype_t type);
-bool		    parser_check_errors		        (parser_t *p);
+void            parser_peek_error               (parser_t *p, tokentype_t type);
+bool            parser_check_errors             (parser_t *p);
 
 precedence_t    parser_get_precedence           (tokentype_t type);
 precedence_t    parser_curr_precedence          (parser_t *parser);

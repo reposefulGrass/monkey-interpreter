@@ -10,25 +10,25 @@
 
 program_t *
 ast_program_create () {
-	program_t *program = (program_t *) malloc(sizeof(program_t));
+    program_t *program = (program_t *) malloc(sizeof(program_t));
     if (program == NULL) {
         fprintf(stderr, "ERROR in 'ast_program_create': Could not allocate 'program'!\n");
         exit(EXIT_FAILURE);
     }
 
-	list stmts;
-	ll_initialize(&stmts);	
+    list stmts;
+    ll_initialize(&stmts);  
 
-	program->statements = stmts;	
+    program->statements = stmts;    
 
-	return program;
+    return program;
 }
 
 
 void
 ast_program_destroy (program_t *program) {
-	ll_destroy(&program->statements, stmt_destroy);
-	free(program);
+    ll_destroy(&program->statements, stmt_destroy);
+    free(program);
 }
 
 char *

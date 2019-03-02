@@ -11,29 +11,29 @@
 
 expr_t *
 expr_identifier_create (token_t token) {
-	expr_t *expr = (expr_t *) malloc(sizeof(expr_t));
+    expr_t *expr = (expr_t *) malloc(sizeof(expr_t));
     if (expr == NULL) {
         fprintf(stderr, "ERROR in 'expr_identifier_create': Failed to allocate 'expr'!\n");
     }
 
-	expr->type = EXPRESSION_IDENTIFIER;
-	EXPR_IDENT(expr) = (identifier_t) { 
+    expr->type = EXPRESSION_IDENTIFIER;
+    EXPR_IDENT(expr) = (identifier_t) { 
         .token = token_dup(token),
         .value = strdup(token.literal)
     };
 
-	expr->token_literal = expr_identifier_token_literal;
+    expr->token_literal = expr_identifier_token_literal;
     expr->string = expr_identifier_string;
-	expr->destroy = expr_identifier_destroy;
+    expr->destroy = expr_identifier_destroy;
 
-	return expr;
+    return expr;
 }
 
 
 char *
 expr_identifier_token_literal (expr_t *expr) {
-	identifier_t ident = EXPR_IDENT(expr);
-	return ident.token.literal;
+    identifier_t ident = EXPR_IDENT(expr);
+    return ident.token.literal;
 }
 
 
@@ -61,17 +61,17 @@ expr_number_create (token_t token, int value) {
         fprintf(stderr, "ERROR in 'expr_number_create': Failed to allocate 'expr'!\n");
     }
 
-	expr->type = EXPRESSION_NUMBER;
-	EXPR_NUMBER(expr) = (number_t) { 
+    expr->type = EXPRESSION_NUMBER;
+    EXPR_NUMBER(expr) = (number_t) { 
         .token = token_dup(token),
         .value = value
     };
 
-	expr->token_literal = expr_number_token_literal;
+    expr->token_literal = expr_number_token_literal;
     expr->string = expr_number_string;
-	expr->destroy = expr_number_destroy;
+    expr->destroy = expr_number_destroy;
 
-	return expr;
+    return expr;
 }
 
 

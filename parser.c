@@ -15,71 +15,71 @@
 
 parser_t *
 parser_create (lexer_t *l) {
-	parser_t *p = (parser_t *) malloc(sizeof(parser_t));
-	if (p == NULL) {
-		fprintf(stderr, "ERROR in 'parser_create': Failed to allocate 'parser'!");	
-		exit(EXIT_FAILURE);
-	}	
+    parser_t *p = (parser_t *) malloc(sizeof(parser_t));
+    if (p == NULL) {
+        fprintf(stderr, "ERROR in 'parser_create': Failed to allocate 'parser'!");  
+        exit(EXIT_FAILURE);
+    }   
 
-	p->lexer = l;
-	p->current_token = (token_t) {.type = TOKEN_EOF, .literal = ""};
-	p->peek_token = (token_t) {.type = TOKEN_EOF, .literal = ""};
-	ll_initialize(&p->errors);
+    p->lexer = l;
+    p->current_token = (token_t) {.type = TOKEN_EOF, .literal = ""};
+    p->peek_token = (token_t) {.type = TOKEN_EOF, .literal = ""};
+    ll_initialize(&p->errors);
 
-	// initialize 'current_token' & 'peek_token' to the first two tokens
-	parser_next_token(p);
-	parser_next_token(p);
+    // initialize 'current_token' & 'peek_token' to the first two tokens
+    parser_next_token(p);
+    parser_next_token(p);
 
-	return p;
+    return p;
 }
 
 
 void
 parser_destroy (parser_t *p) {
-	ll_destroy(&p->errors, free);
-	lexer_destroy(p->lexer);
-	free(p);
+    ll_destroy(&p->errors, free);
+    lexer_destroy(p->lexer);
+    free(p);
 }
 
 
 void 
 parser_next_token (parser_t *p) {
-	token_destroy(&p->current_token);
+    token_destroy(&p->current_token);
 
-	p->current_token = p->peek_token;
-	p->peek_token = lexer_next_token(p->lexer);
+    p->current_token = p->peek_token;
+    p->peek_token = lexer_next_token(p->lexer);
 }
 
 
 /* Construct a linked list of statements (stmt_t). */
 program_t *
 parser_parse_program (parser_t *p) {
-	program_t *program = ast_program_create();
+    program_t *program = ast_program_create();
 
-	while (p->current_token.type != TOKEN_EOF) {
-		stmt_t *stmt = parser_parse_stmt(p);
-		if (stmt != NULL) {
-			ll_append(&program->statements, (void *) stmt);
-		}
-		parser_next_token(p);
-	}	
+    while (p->current_token.type != TOKEN_EOF) {
+        stmt_t *stmt = parser_parse_stmt(p);
+        if (stmt != NULL) {
+            ll_append(&program->statements, (void *) stmt);
+        }
+        parser_next_token(p);
+    }   
 
-	return program;
+    return program;
 }
 
 
 stmt_t *
 parser_parse_stmt (parser_t *p) {
-	switch (p->current_token.type) {
-		case TOKEN_LET:
-			return parser_parse_stmt_let(p);
+    switch (p->current_token.type) {
+        case TOKEN_LET:
+            return parser_parse_stmt_let(p);
 
-		case TOKEN_RETURN:
+        case TOKEN_RETURN:
             return parser_parse_stmt_return(p);
 
-		default:
+        default:
             return parser_parse_stmt_expr(p);
-	}
+    }
 } 
 
 
@@ -95,9 +95,9 @@ parser_parse_stmt_let (parser_t *p) {
     expr_t *identifier = expr_identifier_create(ident_token); 
 
     // temporarily skip value
-	while (!parser_current_token_is(p, TOKEN_SEMICOLON)) {
-		parser_next_token(p);
-	}
+    while (!parser_current_token_is(p, TOKEN_SEMICOLON)) {
+        parser_next_token(p);
+    }
 
     expr_t *value = NULL;
 
@@ -308,25 +308,25 @@ parser_peek_precedence (parser_t *parser) {
 
 bool
 parser_current_token_is (parser_t *p, tokentype_t type) {
-	return p->current_token.type == type;
+    return p->current_token.type == type;
 }
 
 
 bool
 parser_peek_token_is (parser_t *p, tokentype_t type) {
-	return p->peek_token.type == type;
+    return p->peek_token.type == type;
 }
 
 
 bool
 parser_expect_peek (parser_t *p, tokentype_t type) {
-	if (parser_peek_token_is(p, type)) {
-		parser_next_token(p);		
-		return true;
-	}
+    if (parser_peek_token_is(p, type)) {
+        parser_next_token(p);       
+        return true;
+    }
 
-	parser_peek_error(p, type);
-	return false;
+    parser_peek_error(p, type);
+    return false;
 }
 
 // ======== ERROR FUNCTIONS ========
@@ -334,11 +334,11 @@ parser_expect_peek (parser_t *p, tokentype_t type) {
 void
 parser_invalid_number_error (parser_t *parser) {
     char *error_msg = 
-	    "Error at " YELLOW "|%d:%d| " RESET "Expected a number in the range of %d to %d!\n";
+        "Error at " YELLOW "|%d:%d| " RESET "Expected a number in the range of %d to %d!\n";
 
     int error_msg_len = 
-	    strlen(error_msg) - (4 * 2) +	// 4 * strlen("%d")
-	    4 * 10 + 1;						// 4 * size of a maximum integer + NULL
+        strlen(error_msg) - (4 * 2) +   // 4 * strlen("%d")
+        4 * 10 + 1;                     // 4 * size of a maximum integer + NULL
 
     char *error = (char *) malloc(sizeof(char) * error_msg_len);
     if (error == NULL) {
@@ -389,50 +389,50 @@ parser_no_prefix_fn_error (parser_t *parser) {
 
 void
 parser_peek_error (parser_t *p, tokentype_t type) {
-	char *curr_type = token_name(type);
-	char *peek_type = token_name(p->peek_token.type);
+    char *curr_type = token_name(type);
+    char *peek_type = token_name(p->peek_token.type);
 
-	char *error_msg = 
-		"Error at " YELLOW "|%d:%d| " RESET 
-		"Expected token to be " GREEN "'%s'" RESET ", got " RED "'%s'" RESET " instead.";
+    char *error_msg = 
+        "Error at " YELLOW "|%d:%d| " RESET 
+        "Expected token to be " GREEN "'%s'" RESET ", got " RED "'%s'" RESET " instead.";
 
-	int error_msg_len = 
-		strlen(curr_type) +
-		strlen(peek_type) + 
-		strlen(error_msg) - (4 * 2) +	// 2 * strlen("%d") + 2 * strlen("%s")
-		2 * 10 + 1;						// 2 * size of a maximum integer + NULL
+    int error_msg_len = 
+        strlen(curr_type) +
+        strlen(peek_type) + 
+        strlen(error_msg) - (4 * 2) +   // 2 * strlen("%d") + 2 * strlen("%s")
+        2 * 10 + 1;                     // 2 * size of a maximum integer + NULL
 
-	char *error = (char *) malloc(sizeof(char) * error_msg_len);
+    char *error = (char *) malloc(sizeof(char) * error_msg_len);
     if (error == NULL) {
         fprintf(stderr, "ERROR in 'parser_peek_error': Failed to allocate 'error'!\n");
         exit(EXIT_FAILURE);
     }
 
-	snprintf(
+    snprintf(
         error, error_msg_len, error_msg,
         p->peek_token.line, p->peek_token.position, curr_type, peek_type
-	);
-	ll_append(&p->errors, error);
+    );
+    ll_append(&p->errors, error);
 }
 
 
 bool 
-parser_check_errors	(parser_t *p) {
-	int errors = ll_length(p->errors);
-	if (errors == 0) {
-		return false;	
-	}
+parser_check_errors (parser_t *p) {
+    int errors = ll_length(p->errors);
+    if (errors == 0) {
+        return false;   
+    }
 
-	printf("Your program has " RED "'%d' errors!" RESET "\n\n", errors);
+    printf("Your program has " RED "'%d' errors!" RESET "\n\n", errors);
 
-	list cursor = NULL;
-	while ((cursor = ll_iterator(p->errors, cursor)) != NULL) {
-		char *error_msg = (char *) cursor->data;
-		printf("%s\n", error_msg);
-	}
-	putchar('\n');
+    list cursor = NULL;
+    while ((cursor = ll_iterator(p->errors, cursor)) != NULL) {
+        char *error_msg = (char *) cursor->data;
+        printf("%s\n", error_msg);
+    }
+    putchar('\n');
 
-	return true;
+    return true;
 }
 
 

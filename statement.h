@@ -10,15 +10,15 @@ typedef struct statement
     stmt_t;
 
 typedef enum {
-	STATEMENT_LET,
+    STATEMENT_LET,
     STATEMENT_RETURN,
     STATEMENT_EXPRESSION
 } stmt_type_t;
 
 typedef struct {
-	token_t token; 
-	expr_t *name; 
-	expr_t *value;
+    token_t token; 
+    expr_t *name; 
+    expr_t *value;
 } stmt_let_t; 
 
 typedef struct {
@@ -49,35 +49,35 @@ typedef struct {
 #endif
 
 struct statement {
-	stmt_type_t type;	
-	union {
-		stmt_let_t let; 
+    stmt_type_t type;   
+    union {
+        stmt_let_t let; 
         stmt_return_t ret;
         stmt_expr_t expr;
-	} stmt;
+    } stmt;
 
     // ==== METHODS ====
     // this fn will always return a non-allocated literal of the token of the expr
-	char *  (*token_literal)    (stmt_t *stmt);
+    char *  (*token_literal)    (stmt_t *stmt);
     // this fn will always return an heap-allocated string
     char *  (*string)           (stmt_t *stmt);
-	void    (*destroy)          (stmt_t *stmt);
+    void    (*destroy)          (stmt_t *stmt);
 };
 
 stmt_t *    stmt_let_create             (token_t token, expr_t *identifier, expr_t *value);
 char *      stmt_let_token_literal      (stmt_t *stmt);
 char *      stmt_let_string             (stmt_t *stmt);
-void        stmt_let_destroy 		    (stmt_t *stmt);
+void        stmt_let_destroy            (stmt_t *stmt);
 
 stmt_t *    stmt_return_create          (token_t token, expr_t *value);
-char *      stmt_return_token_literal 	(stmt_t *stmt);
+char *      stmt_return_token_literal   (stmt_t *stmt);
 char *      stmt_return_string          (stmt_t *stmt);
-void        stmt_return_destroy 		(stmt_t *stmt);
+void        stmt_return_destroy         (stmt_t *stmt);
 
 stmt_t *    stmt_expr_create            (token_t token, expr_t *value);
 char *      stmt_expr_token_literal     (stmt_t *stmt);
 char *      stmt_expr_string            (stmt_t *stmt);
-void        stmt_expr_destroy 	        (stmt_t *stmt);
+void        stmt_expr_destroy           (stmt_t *stmt);
 
 void        stmt_destroy                (void *data);
 
