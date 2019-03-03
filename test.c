@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
+#include <ctype.h>
 
 #include "linked_list/linked_list.h"
 #include "token.h"
@@ -13,28 +14,32 @@
 #include "expression.h"
 #include "test.h"
 
+// helper tests
+bool test_number (expr_t *expr, int expected_number);
+bool test_identifier (expr_t *expr, char *expected_value);
+bool test_infix_expression (expr_t *expr, void *left, char *op, void *right, char *type);
 
 void test_token ();
 void test_let_stmts ();
 void test_return_stmts ();
-void test_stmt_string_fn ();
+void test_stmt_string ();
 void test_identifier_expr();
 void test_number_expr();
 void test_prefix_expr();
 void test_infix_expr();
-void test_expr_string();
+void test_operator_precedence();
 
 int 
 main () {
     test_token();
     test_let_stmts();
     test_return_stmts();
-    test_stmt_string_fn();
+    test_stmt_string();
     test_identifier_expr();
     test_number_expr();
     test_prefix_expr();
     test_infix_expr();
-    test_expr_string();
+    test_operator_precedence();
 }
 
 bool
@@ -47,11 +52,98 @@ test_number (expr_t *expr, int expected_number) {
         return false;
     }
 
-    number_t number = expr->expr.number;    
+    number_t number = EXPR_NUMBER(expr);
     if (number.value != expected_number) {
         printf(
             "ERROR: number.value != '%d', instead got '%d'!\n",
             expected_number, number.value
+        );
+        return false;
+    }
+
+    char expected[10];
+    snprintf(expected, 10, "%d", expected_number);
+
+    char *actual = TOKEN_LITERAL(expr);
+    if (strcmp(actual, expected) != 0) {
+        printf(
+            "ERROR: TOKEN_LITERAL(expr) != '%s', instead got '%s'!\n",
+            expected, actual
+        );
+        return false;
+    }
+
+    return true;
+}
+
+bool
+test_identifier (expr_t *expr, char *expected) {
+    if (expr->type != EXPRESSION_IDENTIFIER) {
+        printf(
+            "ERROR: expr->type != EXPRESSION_IDENTIFIER, instead got '%d'!\n", 
+            expr->type
+        );
+        return false;
+    }
+
+    identifier_t ident = EXPR_IDENT(expr);
+    if (strcmp(ident.value, expected) != 0) {
+        printf(
+            "ERROR: ident.value != '%s', instead got '%s'!\n",
+            expected, ident.value
+        );
+        return false;
+    }
+
+    char *actual = TOKEN_LITERAL(expr);
+    if (strcmp(actual, expected) != 0) {
+        printf(
+            "ERROR: TOKEN_LITERAL(expr) != '%s', instead got '%s'!\n",
+            expected, actual
+        );
+        return false;
+    }
+
+    return true;
+}
+
+// please forgive me
+bool 
+test_infix_expression (expr_t *expr, void *left, char *op, void *right, char *type) {
+    if (expr->type != EXPRESSION_INFIX) {
+        printf(
+            "ERROR: expr->type != EXPRESSION_INFIX, instead got '%d'!\n", 
+            expr->type
+        );
+        return false;
+    } 
+
+    infix_t infix = EXPR_INFIX(expr);
+    if (strcmp(type, "identifier") == 0) {
+        if (! test_identifier(infix.left_expr, (char *) left)) {
+            return false;
+        }
+        if (! test_identifier(infix.right_expr, (char *) right)) {
+            return false;
+        }
+    }
+    else if (strcmp(type, "number") == 0) {
+        if (! test_number(infix.left_expr, *((int *) left))) {
+            return false;
+        }
+        if (! test_number(infix.right_expr, *((int *) right))) {
+            return false;
+        }
+    }
+    else {
+        printf("ERROR: Unknown meta type '%s'!\n", type);
+        exit(EXIT_FAILURE);
+    }
+
+    if (strcmp(infix.operator, op) != 0) {
+        printf(
+            "ERROR: infix.operator is not '%s', got '%s' instead!\n", 
+            op, infix.operator
         );
         return false;
     }
@@ -65,7 +157,7 @@ typedef struct {
 } expr_test_t;
 
 void
-test_expr_string () {
+test_operator_precedence () {
     bool passed = true;
 
     expr_test_t tests[] = {
@@ -119,7 +211,7 @@ test_expr_string () {
         },
     };
 
-    printf("==== [Test] 'expr_string' ====\n");
+    printf("==== [Test] 'operator_precedence' ====\n");
 
     int size = sizeof(tests) / sizeof(expr_test_t);
     for (int i = 0; i < size; i++) {
@@ -195,24 +287,8 @@ test_infix_expr () {
         stmt_t *stmt = (stmt_t *) program->statements->data;
         TEST_CHECK_STATEMENT_TYPE(stmt->type, STATEMENT_EXPRESSION, goto infix_expr_end)
 
-        stmt_expr_t expr_stmt = STMT_EXPR(stmt);
-        expr_t *expr = expr_stmt.expr;
-        TEST_CHECK_EXPRESSION_TYPE(expr->type, EXPRESSION_INFIX, goto infix_expr_end)
-
-        infix_t infix = EXPR_INFIX(expr);
-
-        passed = test_number(infix.left_expr, test.left);
-
-        if (strcmp(infix.operator, test.operator) != 0) {
-            passed = false;
-            printf(
-                "ERROR: infix.operator != '%s', instead got '%s'!\n", 
-                test.operator, infix.operator
-            );
-            goto infix_expr_end;
-        }
-
-        passed = test_number(infix.right_expr, test.right);
+        expr_t *expr = STMT_EXPR(stmt).expr;
+        passed = test_infix_expression(expr, (void *) &test.left, test.operator, (void *) &test.right, "number");
 
 infix_expr_end:
         ast_program_destroy(program);
@@ -332,8 +408,6 @@ ne_free_resources:
     }    
 }
 
-
-
 void 
 test_identifier_expr () {
     bool passed = true;
@@ -344,28 +418,22 @@ test_identifier_expr () {
     parser_t *parser = parser_create(lexer);
     program_t *program = parser_parse_program(parser);
 
-    TEST_CHECK_PARSER_ERRORS(parser, ie_free_resources)
-    TEST_CHECK_PROGRAM_NOT_NULL(program, ie_free_resources)
-    TEST_CHECK_LIST_LEN(program->statements, 1, ie_free_resources)
+    TEST_CHECK_PARSER_ERRORS(parser, identifier_end)
+    TEST_CHECK_PROGRAM_NOT_NULL(program, identifier_end)
+    TEST_CHECK_LIST_LEN(program->statements, 1, identifier_end)
 
     stmt_t *stmt = (stmt_t *) program->statements->data;
-    TEST_CHECK_STATEMENT_TYPE(stmt->type, STATEMENT_EXPRESSION, goto ie_free_resources)
+    TEST_CHECK_STATEMENT_TYPE(stmt->type, STATEMENT_EXPRESSION, goto identifier_end)
 
-    stmt_expr_t expr_stmt = STMT_EXPR(stmt);
-    expr_t *expr = expr_stmt.expr;
-    TEST_CHECK_EXPRESSION_TYPE(expr->type, EXPRESSION_IDENTIFIER, goto ie_free_resources)
+    expr_t *expr = STMT_EXPR(stmt).expr;
+    TEST_CHECK_EXPRESSION_TYPE(expr->type, EXPRESSION_IDENTIFIER, goto identifier_end)
 
-    identifier_t ident = EXPR_IDENT(expr);
-    char *expected_value = "foobar";
-    if (strcmp(ident.value, expected_value) != 0) {
-        printf(
-            "ERROR: Identifier value not '%s', got '%s' instead.\n",
-            expected_value, ident.value
-        );
-        goto ie_free_resources;
+    if (test_identifier(expr, "foobar") == false) {
+        passed = false;
+        goto identifier_end;
     }
 
-ie_free_resources:
+identifier_end:
     ast_program_destroy(program);
     parser_destroy(parser); 
     
@@ -379,7 +447,7 @@ ie_free_resources:
 
 // whenever I can parse expr change this hardcode into input!
 void
-test_stmt_string_fn () {
+test_stmt_string () {
     bool passed = true;
 
     token_t token = token_create(TOKEN_LET, "let", 0, 0);
@@ -408,10 +476,10 @@ test_stmt_string_fn () {
     ast_program_destroy(program);
 
     if (passed == true) {
-        printf("Test 'string_fn' has passed!\n");
+        printf("Test 'stmt_string' has passed!\n");
     }
     else {
-        printf("Test 'string_fn' has failed!\n");
+        printf("Test 'stmt_string' has failed!\n");
     }
 }
 
@@ -480,16 +548,7 @@ test_let_stmt (stmt_t *stmt, char *expected_identifier) {
 
     stmt_let_t let_stmt = STMT_LET(stmt);
 
-    char *identifier = TOKEN_LITERAL(let_stmt.name);
-    if (strcmp(identifier, expected_identifier)) {
-        printf(
-            "ERROR: let_stmt->name.token.literal not '%s'. got '%s'.\n",
-            expected_identifier, identifier
-        );
-        return false;
-    }
-
-    return true;
+    return test_identifier(let_stmt.name, expected_identifier);
 }
 
 void

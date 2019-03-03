@@ -150,7 +150,8 @@ parser_parse_stmt_expr (parser_t *parser) {
 /* First, parse it as a prefix expression. Then check if the peek (next) 
  * token is an operator of an infix expression. 
  *
- * If it is an infix expression, 
+ * If it is an infix expression and its precedence is higher than 
+ * the previous precedence: 
  *      parse and return the entire expression as an infix expression. 
  * Else 
  *      return the already parsed prefix expression
