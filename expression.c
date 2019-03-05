@@ -97,6 +97,49 @@ expr_number_destroy (expr_t *expr) {
     free(expr);
 }
 
+// ======== BOOLEAN ========
+
+expr_t *    
+expr_boolean_create (token_t token, bool value) {
+    expr_t *expr = (expr_t *) malloc(sizeof(expr_t));
+    if (expr == NULL) {
+        fprintf(stderr, "ERROR in 'expr_boolean_create': Failed to allocate 'expr'!\n");
+    }
+
+    expr->type = EXPRESSION_BOOLEAN;
+    EXPR_BOOLEAN(expr) = (boolean_t) { 
+        .token = token_dup(token),
+        .value = value
+    };
+
+    expr->token_literal = expr_boolean_token_literal;
+    expr->string = expr_boolean_string;
+    expr->destroy = expr_boolean_destroy;
+
+    return expr;
+}
+
+char *      
+expr_boolean_token_literal (expr_t *expr) {
+    boolean_t boolean = EXPR_BOOLEAN(expr);
+    return boolean.token.literal;
+}
+
+char *      
+expr_boolean_string (expr_t *expr) {
+    boolean_t boolean = EXPR_BOOLEAN(expr);
+    return strdup(boolean.token.literal);
+}
+
+void        
+expr_boolean_destroy (expr_t *expr) {
+    boolean_t boolean = EXPR_BOOLEAN(expr);
+
+    token_destroy(&boolean.token);
+    free(expr);
+} 
+
+
 // ======== PREFIX ========
 
 expr_t *  

@@ -212,6 +212,10 @@ parser_get_prefix_fn (tokentype_t type) {
         case TOKEN_NUMBER: 
             return parser_parse_expr_number;
 
+        case TOKEN_TRUE:
+        case TOKEN_FALSE:
+            return parser_parse_expr_boolean;
+
         case TOKEN_BANG:
         case TOKEN_MINUS:
             return parser_parse_expr_prefix;
@@ -259,6 +263,13 @@ parser_parse_expr_number (parser_t *parser) {
     }
 
     return expr_number_create(curr_token, number);
+}
+
+
+expr_t *
+parser_parse_expr_boolean (parser_t *parser) {
+    bool value = parser_current_token_is(parser, TOKEN_TRUE);
+    return expr_boolean_create(parser->current_token, value);
 }
 
 

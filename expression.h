@@ -2,7 +2,7 @@
 #ifndef EXPRESSION_H
 #define EXPRESSION_H
 
-
+#include <stdbool.h>
 #include "token.h"
 
 typedef struct expression
@@ -11,6 +11,7 @@ typedef struct expression
 typedef enum {
     EXPRESSION_IDENTIFIER,
     EXPRESSION_NUMBER,
+    EXPRESSION_BOOLEAN,
     EXPRESSION_PREFIX,
     EXPRESSION_INFIX
 } expr_type_t;
@@ -24,6 +25,11 @@ typedef struct {
     token_t token;
     int value;
 } number_t;
+
+typedef struct {
+    token_t token;
+    bool value;
+} boolean_t;
 
 typedef struct {
     token_t token; // operator of the prefix expr
@@ -43,6 +49,7 @@ typedef struct {
 // WARNING: 'e' must be of type 'expr_t *'
 #define EXPR_IDENT(e)   ((e)->expr.identifier)
 #define EXPR_NUMBER(e)  ((e)->expr.number)
+#define EXPR_BOOLEAN(e) ((e)->expr.boolean)
 #define EXPR_PREFIX(e)  ((e)->expr.prefix)
 #define EXPR_INFIX(e)   ((e)->expr.infix)
 
@@ -61,6 +68,7 @@ struct expression {
     union {
         identifier_t identifier; 
         number_t number;
+        boolean_t boolean;
         prefix_t prefix;
         infix_t infix;
     } expr;
@@ -82,6 +90,11 @@ expr_t *    expr_number_create              (token_t token, int value);
 char *      expr_number_token_literal       (expr_t *expr);
 char *      expr_number_string              (expr_t *expr);
 void        expr_number_destroy             (expr_t *expr);
+
+expr_t *    expr_boolean_create             (token_t token, bool value);
+char *      expr_boolean_token_literal      (expr_t *expr);
+char *      expr_boolean_string             (expr_t *expr);
+void        expr_boolean_destroy            (expr_t *expr);
 
 expr_t *    expr_prefix_create              (token_t token, char *op, expr_t *expr);
 char *      expr_prefix_token_literal       (expr_t *expr);

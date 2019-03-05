@@ -17,6 +17,7 @@
 // helper tests
 bool test_number (expr_t *expr, int expected_number);
 bool test_identifier (expr_t *expr, char *expected_value);
+bool test_boolean (expr_t *expr, bool value);
 bool test_infix_expression (expr_t *expr, void *left, char *op, void *right, char *type);
 
 void test_token ();
@@ -28,18 +29,84 @@ void test_number_expr();
 void test_prefix_expr();
 void test_infix_expr();
 void test_operator_precedence();
+void test_boolean_expr();
 
 int 
 main () {
-    test_token();
-    test_let_stmts();
-    test_return_stmts();
-    test_stmt_string();
-    test_identifier_expr();
-    test_number_expr();
-    test_prefix_expr();
-    test_infix_expr();
-    test_operator_precedence();
+    //test_token();
+    //test_let_stmts();
+    //test_return_stmts();
+    //test_stmt_string();
+    //test_identifier_expr();
+    //test_number_expr();
+    //test_prefix_expr();
+    //test_infix_expr();
+    //test_operator_precedence();
+    //test_boolean_expr();
+}
+
+bool
+test_boolean (expr_t *expr, bool value) {
+    if (expr->type != EXPRESSION_BOOLEAN) {
+        printf("ERROR: expr->type != EXPR_BOOLEAN!\n");
+        return false;
+    }
+
+    char *expected = (value) ? "true" : "false";
+    char *actual = TOKEN_LITERAL(expr);
+    if (strcmp(actual, expected) != 0) {
+        printf(
+            "ERROR: TOKEN_LITERAL(expr) != '%s', instead got '%s'!\n",
+            expected, actual
+        );
+        return false;
+    }
+
+    boolean_t boolean = EXPR_BOOLEAN(expr);
+    if (boolean.value != value) {
+        printf("ERROR: boolean.value != value!\n");
+        return false;
+    }
+
+    return true;
+}
+
+void
+test_boolean_expr () {
+    bool passed = true;
+    char *input = strdup("true;false;");
+
+    lexer_t *lexer = lexer_create(input);
+    parser_t *parser = parser_create(lexer);
+    program_t *program = parser_parse_program(parser);
+
+    TEST_CHECK_PARSER_ERRORS(parser, boolean_expr_end)
+    TEST_CHECK_PROGRAM_NOT_NULL(program, boolean_expr_end)
+    TEST_CHECK_LIST_LEN(program->statements, 2, boolean_expr_end) // 2?
+
+    stmt_t *first_stmt = (stmt_t *) program->statements->data;
+    TEST_CHECK_STATEMENT_TYPE(first_stmt->type, STATEMENT_EXPRESSION, goto boolean_expr_end)
+    expr_t *first_expr = STMT_EXPR(first_stmt).expr;
+    TEST_CHECK_EXPRESSION_TYPE(first_expr->type, EXPRESSION_BOOLEAN, goto boolean_expr_end)
+
+    stmt_t *second_stmt = (stmt_t *) NEXT(program->statements)->data;
+    TEST_CHECK_STATEMENT_TYPE(second_stmt->type, STATEMENT_EXPRESSION, goto boolean_expr_end)
+    expr_t *second_expr = STMT_EXPR(second_stmt).expr;
+    TEST_CHECK_EXPRESSION_TYPE(second_expr->type, EXPRESSION_BOOLEAN, goto boolean_expr_end)
+
+    passed = test_boolean(first_expr, true);
+    passed = test_boolean(second_expr, false);
+
+boolean_expr_end:
+    ast_program_destroy(program);
+    parser_destroy(parser); 
+    
+    if (passed == false) {
+        printf("Test 'boolean_expr' has failed!\n");
+    }
+    else {
+        printf("Test 'boolean_expr' has passed!\n");
+    }  
 }
 
 bool
@@ -209,6 +276,22 @@ test_operator_precedence () {
             "3 + 4 * 5 == 3 * 1 + 4 * 5",
             "((3 + (4 * 5)) == ((3 * 1) + (4 * 5)))" 
         },
+        { // test #12
+            "true",
+            "true",   
+        },
+        { // test #13
+            "false",
+            "false"
+        }, 
+        { // test #14
+            "3 > 5 == false",
+            "((3 > 5) == false)"
+        },
+        { // test #15
+            "3 < 5 == true",
+            "((3 < 5) == true)"
+        }
     };
 
     printf("==== [Test] 'operator_precedence' ====\n");
@@ -258,14 +341,17 @@ test_infix_expr () {
     bool passed = true;
 
     infix_test_t tests[] = {
-        /* Test #0 */ {"5 + 5;",  5, "+",  5},
-        /* Test #1 */ {"5 - 5;",  5, "-",  5},
-        /* Test #2 */ {"5 * 5;",  5, "*",  5},
-        /* Test #3 */ {"5 / 5;",  5, "/",  5},
-        /* Test #4 */ {"5 > 5;",  5, ">",  5},
-        /* Test #5 */ {"5 < 5;",  5, "<",  5},
-        /* Test #6 */ {"5 == 5;", 5, "==", 5},
-        /* Test #7 */ {"5 != 5;", 5, "!=", 5},
+        /* Test #0 */  {"5 + 5;",  5, "+",  5},
+        /* Test #1 */  {"5 - 5;",  5, "-",  5},
+        /* Test #2 */  {"5 * 5;",  5, "*",  5},
+        /* Test #3 */  {"5 / 5;",  5, "/",  5},
+        /* Test #4 */  {"5 > 5;",  5, ">",  5},
+        /* Test #5 */  {"5 < 5;",  5, "<",  5},
+        /* Test #6 */  {"5 == 5;", 5, "==", 5},
+        /* Test #7 */  {"5 != 5;", 5, "!=", 5},
+        /* Test #8 */  {"true == true;",  true,  "==", true},
+        /* Test #9 */  {"false != true;", false, "!=", true},
+        /* Test #10 */ {"false == false", false, "==", false}
     };
 
     printf("==== [Test] 'infix_expr' ====\n");
@@ -288,7 +374,12 @@ test_infix_expr () {
         TEST_CHECK_STATEMENT_TYPE(stmt->type, STATEMENT_EXPRESSION, goto infix_expr_end)
 
         expr_t *expr = STMT_EXPR(stmt).expr;
-        passed = test_infix_expression(expr, (void *) &test.left, test.operator, (void *) &test.right, "number");
+        if (expr->type == EXPRESSION_NUMBER) {
+            passed = test_infix_expression(expr, (void *) &test.left, test.operator, (void *) &test.right, "number");
+        }
+        else if (expr->type == EXPRESSION_BOOLEAN) {
+            passed = test_infix_expression(expr, (void *) &test.left, test.operator, (void *) &test.right, "boolean");
+        }
 
 infix_expr_end:
         ast_program_destroy(program);
@@ -314,8 +405,10 @@ test_prefix_expr () {
     bool passed = true;
 
     prefix_test_t tests[] = {
-        /* Test #0 */ {"!5;",  "!",  5},
-        /* Test #1 */ {"-15;", "-", 15}
+        /* Test #0 */ {"!5;",    "!",  5},
+        /* Test #1 */ {"-15;",   "-",  15},
+        /* Test #2 */ {"!true",  "!",  true},
+        /* Test #3 */ {"!false", "!",  false}
     };
 
     printf("==== [Test] 'prefix_expr' ====\n");
@@ -350,7 +443,13 @@ test_prefix_expr () {
             );
             goto pe_free_resources;
         }
-        passed = test_number(prefix.expr, test.number);
+
+        if (prefix.expr->type == EXPRESSION_NUMBER) {
+            passed = test_number(prefix.expr, test.number);
+        }
+        else if (prefix.expr->type == EXPRESSION_BOOLEAN) {
+            passed = test_boolean(prefix.expr, test.number);
+        }
 
 pe_free_resources:
         ast_program_destroy(program);
