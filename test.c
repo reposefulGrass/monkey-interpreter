@@ -33,22 +33,22 @@ void test_boolean_expr();
 
 int 
 main () {
-    //test_token();
-    //test_let_stmts();
-    //test_return_stmts();
-    //test_stmt_string();
-    //test_identifier_expr();
-    //test_number_expr();
-    //test_prefix_expr();
-    //test_infix_expr();
-    //test_operator_precedence();
-    //test_boolean_expr();
+    test_token();
+    test_let_stmts();
+    test_return_stmts();
+    test_stmt_string();
+    test_identifier_expr();
+    test_number_expr();
+    test_prefix_expr();
+    test_infix_expr();
+    test_operator_precedence();
+    test_boolean_expr();
 }
 
 bool
 test_boolean (expr_t *expr, bool value) {
     if (expr->type != EXPRESSION_BOOLEAN) {
-        printf("ERROR: expr->type != EXPR_BOOLEAN!\n");
+        printf("ERROR | expr->type != EXPR_BOOLEAN!\n");
         return false;
     }
 
@@ -56,7 +56,7 @@ test_boolean (expr_t *expr, bool value) {
     char *actual = TOKEN_LITERAL(expr);
     if (strcmp(actual, expected) != 0) {
         printf(
-            "ERROR: TOKEN_LITERAL(expr) != '%s', instead got '%s'!\n",
+            "ERROR | TOKEN_LITERAL(expr) != '%s', instead got '%s'!\n",
             expected, actual
         );
         return false;
@@ -64,56 +64,18 @@ test_boolean (expr_t *expr, bool value) {
 
     boolean_t boolean = EXPR_BOOLEAN(expr);
     if (boolean.value != value) {
-        printf("ERROR: boolean.value != value!\n");
+        printf("ERROR | boolean.value != value!\n");
         return false;
     }
 
     return true;
 }
 
-void
-test_boolean_expr () {
-    bool passed = true;
-    char *input = strdup("true;false;");
-
-    lexer_t *lexer = lexer_create(input);
-    parser_t *parser = parser_create(lexer);
-    program_t *program = parser_parse_program(parser);
-
-    TEST_CHECK_PARSER_ERRORS(parser, boolean_expr_end)
-    TEST_CHECK_PROGRAM_NOT_NULL(program, boolean_expr_end)
-    TEST_CHECK_LIST_LEN(program->statements, 2, boolean_expr_end) // 2?
-
-    stmt_t *first_stmt = (stmt_t *) program->statements->data;
-    TEST_CHECK_STATEMENT_TYPE(first_stmt->type, STATEMENT_EXPRESSION, goto boolean_expr_end)
-    expr_t *first_expr = STMT_EXPR(first_stmt).expr;
-    TEST_CHECK_EXPRESSION_TYPE(first_expr->type, EXPRESSION_BOOLEAN, goto boolean_expr_end)
-
-    stmt_t *second_stmt = (stmt_t *) NEXT(program->statements)->data;
-    TEST_CHECK_STATEMENT_TYPE(second_stmt->type, STATEMENT_EXPRESSION, goto boolean_expr_end)
-    expr_t *second_expr = STMT_EXPR(second_stmt).expr;
-    TEST_CHECK_EXPRESSION_TYPE(second_expr->type, EXPRESSION_BOOLEAN, goto boolean_expr_end)
-
-    passed = test_boolean(first_expr, true);
-    passed = test_boolean(second_expr, false);
-
-boolean_expr_end:
-    ast_program_destroy(program);
-    parser_destroy(parser); 
-    
-    if (passed == false) {
-        printf("Test 'boolean_expr' has failed!\n");
-    }
-    else {
-        printf("Test 'boolean_expr' has passed!\n");
-    }  
-}
-
 bool
 test_number (expr_t *expr, int expected_number) {
     if (expr->type != EXPRESSION_NUMBER) {
         printf(
-            "ERROR: expr->type != EXPRESSION_NUMBER, instead got '%d'!\n", 
+            "ERROR | expr->type != EXPRESSION_NUMBER, instead got '%d'!\n", 
             expr->type
         );
         return false;
@@ -122,7 +84,7 @@ test_number (expr_t *expr, int expected_number) {
     number_t number = EXPR_NUMBER(expr);
     if (number.value != expected_number) {
         printf(
-            "ERROR: number.value != '%d', instead got '%d'!\n",
+            "ERROR | number.value != '%d', instead got '%d'!\n",
             expected_number, number.value
         );
         return false;
@@ -134,7 +96,7 @@ test_number (expr_t *expr, int expected_number) {
     char *actual = TOKEN_LITERAL(expr);
     if (strcmp(actual, expected) != 0) {
         printf(
-            "ERROR: TOKEN_LITERAL(expr) != '%s', instead got '%s'!\n",
+            "ERROR | TOKEN_LITERAL(expr) != '%s', instead got '%s'!\n",
             expected, actual
         );
         return false;
@@ -147,7 +109,7 @@ bool
 test_identifier (expr_t *expr, char *expected) {
     if (expr->type != EXPRESSION_IDENTIFIER) {
         printf(
-            "ERROR: expr->type != EXPRESSION_IDENTIFIER, instead got '%d'!\n", 
+            "ERROR | expr->type != EXPRESSION_IDENTIFIER, instead got '%d'!\n", 
             expr->type
         );
         return false;
@@ -156,7 +118,7 @@ test_identifier (expr_t *expr, char *expected) {
     identifier_t ident = EXPR_IDENT(expr);
     if (strcmp(ident.value, expected) != 0) {
         printf(
-            "ERROR: ident.value != '%s', instead got '%s'!\n",
+            "ERROR | ident.value != '%s', instead got '%s'!\n",
             expected, ident.value
         );
         return false;
@@ -165,7 +127,7 @@ test_identifier (expr_t *expr, char *expected) {
     char *actual = TOKEN_LITERAL(expr);
     if (strcmp(actual, expected) != 0) {
         printf(
-            "ERROR: TOKEN_LITERAL(expr) != '%s', instead got '%s'!\n",
+            "ERROR | TOKEN_LITERAL(expr) != '%s', instead got '%s'!\n",
             expected, actual
         );
         return false;
@@ -179,7 +141,7 @@ bool
 test_infix_expression (expr_t *expr, void *left, char *op, void *right, char *type) {
     if (expr->type != EXPRESSION_INFIX) {
         printf(
-            "ERROR: expr->type != EXPRESSION_INFIX, instead got '%d'!\n", 
+            "ERROR | expr->type != EXPRESSION_INFIX, instead got '%d'!\n", 
             expr->type
         );
         return false;
@@ -202,20 +164,71 @@ test_infix_expression (expr_t *expr, void *left, char *op, void *right, char *ty
             return false;
         }
     }
+    else if (strcmp(type, "boolean") == 0) {
+        if (! test_boolean(infix.left_expr, *((int *) left))) {
+            return false;
+        }
+        if (! test_boolean(infix.right_expr, *((int *) right))) {
+            return false;
+        }
+    }
     else {
-        printf("ERROR: Unknown meta type '%s'!\n", type);
+        printf("ERROR | Unknown meta type '%s'!\n", type);
         exit(EXIT_FAILURE);
     }
 
     if (strcmp(infix.operator, op) != 0) {
         printf(
-            "ERROR: infix.operator is not '%s', got '%s' instead!\n", 
+            "ERROR | infix.operator is not '%s', got '%s' instead!\n", 
             op, infix.operator
         );
         return false;
     }
 
     return true;
+}
+
+void
+test_boolean_expr () {
+    printf("[Test] 'boolean_expr'\n");
+
+    char *input = strdup("true;false;");
+
+    lexer_t *lexer = lexer_create(input);
+    parser_t *parser = parser_create(lexer);
+    program_t *program = parser_parse_program(parser);
+
+    test_fail(
+        "Parser initialization",
+        !parser_check_errors(parser) &&
+        (program != NULL) &&
+        (ll_length(program->statements) == 2)
+    )
+
+    stmt_t *first_stmt = (stmt_t *) program->statements->data;
+    expr_t *first_expr = STMT_EXPR(first_stmt).expr;
+
+    test_fail(
+        "First statement wrong",
+        (first_stmt->type == STATEMENT_EXPRESSION) &&
+        (first_expr->type == EXPRESSION_BOOLEAN)
+    )
+
+    stmt_t *second_stmt = (stmt_t *) NEXT(program->statements)->data;
+    expr_t *second_expr = STMT_EXPR(second_stmt).expr;
+
+    test_fail(
+        "Second statement wrong",
+        (second_stmt->type == STATEMENT_EXPRESSION) &&
+        (second_expr->type == EXPRESSION_BOOLEAN)
+    )
+
+    test_fail("First boolean", test_boolean(first_expr, true))
+    test_fail("Second boolean", test_boolean(second_expr, false))
+
+    ast_program_destroy(program);
+    parser_destroy(parser); 
+    test_report()    
 }
 
 typedef struct {
@@ -225,8 +238,6 @@ typedef struct {
 
 void
 test_operator_precedence () {
-    bool passed = true;
-
     expr_test_t tests[] = {
         { // test #0
             "-a * b",
@@ -294,7 +305,7 @@ test_operator_precedence () {
         }
     };
 
-    printf("==== [Test] 'operator_precedence' ====\n");
+    printf("[Test] 'operator_precedence'\n");
 
     int size = sizeof(tests) / sizeof(expr_test_t);
     for (int i = 0; i < size; i++) {
@@ -306,27 +317,27 @@ test_operator_precedence () {
         parser_t *parser = parser_create(lexer);
         program_t *program = parser_parse_program(parser);
 
-        TEST_CHECK_PARSER_ERRORS(parser, expr_string_end)
-        TEST_CHECK_PROGRAM_NOT_NULL(program, expr_string_end)
+        test_fail(
+            "Parser initialization",
+            !parser_check_errors(parser) &&
+            (program->statements != NULL)
+        )
 
         char *actual = ast_program_string(program);
-        //printf("  %s\n", actual);
         if (strcmp(actual, test.expected) != 0) {
-            printf("Error: Expected '%s', got '%s' instead.\n", test.expected, actual);
+            __failed_tests++;
+            printf(
+                "ERROR @ %d | Expected '%s', got '%s' instead.\n", 
+                i, test.expected, actual
+            );
         } 
         free(actual);
 
-expr_string_end:
         ast_program_destroy(program);
         parser_destroy(parser); 
-
-        if (passed == false) {
-            printf("  Test #%d has failed!\n", i);
-        }
-        else {
-            printf("  Test #%d has passed!\n", i);
-        }
     }
+
+    test_report();
 }
 
 typedef struct {
@@ -338,7 +349,7 @@ typedef struct {
 
 void
 test_infix_expr () {
-    bool passed = true;
+    printf("[Test] 'infix_expr'\n");
 
     infix_test_t tests[] = {
         /* Test #0 */  {"5 + 5;",  5, "+",  5},
@@ -354,8 +365,6 @@ test_infix_expr () {
         /* Test #10 */ {"false == false", false, "==", false}
     };
 
-    printf("==== [Test] 'infix_expr' ====\n");
-
     int size = sizeof(tests) / sizeof(infix_test_t);
     for (int index = 0; index < size; index++) {
         infix_test_t test = tests[index];
@@ -366,32 +375,43 @@ test_infix_expr () {
         parser_t *parser = parser_create(lexer);
         program_t *program = parser_parse_program(parser);
 
-        TEST_CHECK_PARSER_ERRORS(parser, infix_expr_end)
-        TEST_CHECK_PROGRAM_NOT_NULL(program, infix_expr_end)
-        TEST_CHECK_LIST_LEN(program->statements, 1, infix_expr_end)
+        test_fail(
+            "Parser_initialization",
+            !parser_check_errors(parser) &&
+            (program != NULL) &&
+            (ll_length(program->statements) == 1)
+        )
 
         stmt_t *stmt = (stmt_t *) program->statements->data;
-        TEST_CHECK_STATEMENT_TYPE(stmt->type, STATEMENT_EXPRESSION, goto infix_expr_end)
+        test_fail(
+            "Statement type",
+            stmt->type == STATEMENT_EXPRESSION
+        )
 
         expr_t *expr = STMT_EXPR(stmt).expr;
-        if (expr->type == EXPRESSION_NUMBER) {
-            passed = test_infix_expression(expr, (void *) &test.left, test.operator, (void *) &test.right, "number");
+        infix_t infix_expr = EXPR_INFIX(expr);
+        if (infix_expr.left_expr->type == EXPRESSION_NUMBER) {
+            test_fail(
+                "Valid expression number",
+                test_infix_expression(
+                    expr, (void *) &test.left, test.operator, (void *) &test.right, "number"
+                )
+            )
         }
-        else if (expr->type == EXPRESSION_BOOLEAN) {
-            passed = test_infix_expression(expr, (void *) &test.left, test.operator, (void *) &test.right, "boolean");
+        else if (infix_expr.left_expr->type == EXPRESSION_BOOLEAN) {
+            test_fail(
+                "Valid expression boolean",
+                test_infix_expression(
+                    expr, (void *) &test.left, test.operator, (void *) &test.right, "boolean"
+                )
+            )
         }
 
-infix_expr_end:
         ast_program_destroy(program);
         parser_destroy(parser); 
-
-        if (passed == false) {
-            printf("  Test #%d has failed!\n", index);
-        }
-        else {
-            printf("  Test #%d has passed!\n", index);
-        }
     }
+    
+    test_report()
 }
 
 typedef struct {
@@ -402,7 +422,7 @@ typedef struct {
 
 void
 test_prefix_expr () {
-    bool passed = true;
+    printf("[Test] 'prefix_expr'\n");
 
     prefix_test_t tests[] = {
         /* Test #0 */ {"!5;",    "!",  5},
@@ -410,8 +430,6 @@ test_prefix_expr () {
         /* Test #2 */ {"!true",  "!",  true},
         /* Test #3 */ {"!false", "!",  false}
     };
-
-    printf("==== [Test] 'prefix_expr' ====\n");
 
     int size = sizeof(tests) / sizeof(prefix_test_t);
     for (int index = 0; index < size; index++) {
@@ -423,50 +441,48 @@ test_prefix_expr () {
         parser_t *parser = parser_create(lexer);
         program_t *program = parser_parse_program(parser);
 
-        TEST_CHECK_PARSER_ERRORS(parser, pe_free_resources)
-        TEST_CHECK_PROGRAM_NOT_NULL(program, pe_free_resources)
-        TEST_CHECK_LIST_LEN(program->statements, 1, pe_free_resources)
+        test_fail(
+            "Parser init",
+            !parser_check_errors(parser) &&
+            (program != NULL) &&
+            (ll_length(program->statements) == 1)
+        )
 
         stmt_t *stmt = (stmt_t *) program->statements->data;
-        TEST_CHECK_STATEMENT_TYPE(stmt->type, STATEMENT_EXPRESSION, goto pe_free_resources)
-
         stmt_expr_t expr_stmt = STMT_EXPR(stmt);
         expr_t *expr = expr_stmt.expr;
-        TEST_CHECK_EXPRESSION_TYPE(expr->type, EXPRESSION_PREFIX, goto pe_free_resources)
+
+        test_fail(
+            "Valid expression statement",
+            (stmt->type == STATEMENT_EXPRESSION) &&
+            (expr->type == EXPRESSION_PREFIX)
+        )
 
         prefix_t prefix = EXPR_PREFIX(expr);
         if (strcmp(prefix.operator, test.operator) != 0) {
-            passed = false;
             printf(
-                "ERROR: prefix.operator != '%s', instead got '%s'!\n", 
+                "ERROR | prefix.operator != '%s', instead got '%s'!\n", 
                 test.operator, prefix.operator
             );
-            goto pe_free_resources;
         }
 
         if (prefix.expr->type == EXPRESSION_NUMBER) {
-            passed = test_number(prefix.expr, test.number);
+            test_fail("Valid number", test_number(prefix.expr, test.number))
         }
         else if (prefix.expr->type == EXPRESSION_BOOLEAN) {
-            passed = test_boolean(prefix.expr, test.number);
+            test_fail("Valid boolean", test_boolean(prefix.expr, test.number))
         }
 
-pe_free_resources:
         ast_program_destroy(program);
         parser_destroy(parser); 
-
-        if (passed == false) {
-            printf("  Test #%d has failed!\n", index);
-        }
-        else {
-            printf("  Test #%d has passed!\n", index);
-        }
     }
+
+    test_report()
 }
 
 void 
 test_number_expr () {
-    bool passed = true;
+    printf("[Test] 'number_expr'\n");
     char *input_raw = "5;";
     char *input = strdup(input_raw);
 
@@ -474,42 +490,37 @@ test_number_expr () {
     parser_t *parser = parser_create(lexer);
     program_t *program = parser_parse_program(parser);
 
-    TEST_CHECK_PARSER_ERRORS(parser, ne_free_resources)
-    TEST_CHECK_PROGRAM_NOT_NULL(program, ne_free_resources)
-    TEST_CHECK_LIST_LEN(program->statements, 1, ne_free_resources)
+    test_fail(
+        "Parser initialization",
+        !parser_check_errors(parser) &&
+        (program != NULL) && 
+        (ll_length(program->statements) == 1)
+    )
 
     stmt_t *stmt = (stmt_t *) program->statements->data;
-    TEST_CHECK_STATEMENT_TYPE(stmt->type, STATEMENT_EXPRESSION, goto ne_free_resources)
+    test_fail("Statement type", stmt->type == STATEMENT_EXPRESSION)
 
     stmt_expr_t expr_stmt = STMT_EXPR(stmt);
     expr_t *expr = expr_stmt.expr;
-    TEST_CHECK_EXPRESSION_TYPE(expr->type, EXPRESSION_NUMBER, goto ne_free_resources);
+    test_fail("Expression type", expr->type == EXPRESSION_NUMBER)
 
     number_t ident = EXPR_NUMBER(expr);
     int expected_value = 5;
     if (ident.value != expected_value) {
         printf(
-            "ERROR: Number value not '%d', got '%d' instead.\n",
+            "ERROR | Number value not '%d', got '%d' instead.\n",
             expected_value, ident.value
         );
-        goto ne_free_resources;
     }
 
-ne_free_resources:
     ast_program_destroy(program);
     parser_destroy(parser); 
-    
-    if (passed == false) {
-        printf("Test 'number_expr' has failed!\n");
-    }
-    else {
-        printf("Test 'number_expr' has passed!\n");
-    }    
+    test_report()
 }
 
 void 
 test_identifier_expr () {
-    bool passed = true;
+    printf("[Test] 'identifier_expr'\n");
     char *input_raw = "foobar;";
     char *input = strdup(input_raw);
 
@@ -517,38 +528,29 @@ test_identifier_expr () {
     parser_t *parser = parser_create(lexer);
     program_t *program = parser_parse_program(parser);
 
-    TEST_CHECK_PARSER_ERRORS(parser, identifier_end)
-    TEST_CHECK_PROGRAM_NOT_NULL(program, identifier_end)
-    TEST_CHECK_LIST_LEN(program->statements, 1, identifier_end)
+    test_fail(
+        "Parser initialization",
+        !parser_check_errors(parser) &&
+        (program != NULL) && 
+        (ll_length(program->statements) == 1)
+    )
 
     stmt_t *stmt = (stmt_t *) program->statements->data;
-    TEST_CHECK_STATEMENT_TYPE(stmt->type, STATEMENT_EXPRESSION, goto identifier_end)
+    test_fail("Statement type", stmt->type == STATEMENT_EXPRESSION)
 
     expr_t *expr = STMT_EXPR(stmt).expr;
-    TEST_CHECK_EXPRESSION_TYPE(expr->type, EXPRESSION_IDENTIFIER, goto identifier_end)
+    test_fail("Expression type", expr->type == EXPRESSION_IDENTIFIER)
+    test_fail("Valid identifier", test_identifier(expr, "foobar"))
 
-    if (test_identifier(expr, "foobar") == false) {
-        passed = false;
-        goto identifier_end;
-    }
-
-identifier_end:
     ast_program_destroy(program);
     parser_destroy(parser); 
-    
-    if (passed == false) {
-        printf("Test 'identifier_expr' has failed!\n");
-    }
-    else {
-        printf("Test 'identifier_expr' has passed!\n");
-    }    
+    test_report()
 }
 
 // whenever I can parse expr change this hardcode into input!
 void
 test_stmt_string () {
-    bool passed = true;
-
+    printf("[Test] 'stmt_string'\n");
     token_t token = token_create(TOKEN_LET, "let", 0, 0);
 
     token_t identifier_token = token_create(TOKEN_IDENT, "myVar", 0, 0);
@@ -566,72 +568,53 @@ test_stmt_string () {
     ll_append(&program->statements, (void *) stmt);
    
     char *program_str = ast_program_string(program); 
-    if (strcmp(program_str, "let myVar = anotherVar;") != 0) {
-        passed = false;
-        printf("ast_program_string() is wrong. got = '%s'\n", program_str);
-    }
+    test_fail("Program String", strcmp(program_str, "let myVar = anotherVar;") == 0)
+
     free(program_str);
-
     ast_program_destroy(program);
-
-    if (passed == true) {
-        printf("Test 'stmt_string' has passed!\n");
-    }
-    else {
-        printf("Test 'stmt_string' has failed!\n");
-    }
+    test_report()
 }
 
 void
 test_return_stmts() {
+    printf("[Test] 'return stmts'\n");
     char *input_raw = 
         "return 5;\n"
         "return 10;\n"
         "return 993322;\n";
     char *input = strdup(input_raw);
 
-    bool passed = true;
-
     lexer_t *lexer = lexer_create(input);
     parser_t *parser = parser_create(lexer);
     program_t *program = parser_parse_program(parser);
 
-    TEST_CHECK_PARSER_ERRORS(parser, rs_free_resources)
-    TEST_CHECK_PROGRAM_NOT_NULL(program, rs_free_resources)
-    TEST_CHECK_LIST_LEN(program->statements, 3, rs_free_resources)
+    test_fail(
+        "Parser initialization",
+        !parser_check_errors(parser) &&
+        (program != NULL) && 
+        (ll_length(program->statements) == 3)
+    )
 
     list cursor = NULL;
     while ((cursor = ll_iterator(program->statements, cursor)) != NULL) {
         stmt_t *stmt = (stmt_t *) cursor->data;
 
-        TEST_CHECK_STATEMENT_TYPE(stmt->type, STATEMENT_RETURN, continue)
+        test_fail("Statement type", stmt->type == STATEMENT_RETURN)
 
-        if (strcmp(stmt->token_literal(stmt), "return") != 0) {
-            passed = false;
-            printf(
-                "stmt->token_literal(stmt) NOT 'return'; got '%s' instead.\n",
-                TOKEN_LITERAL(stmt)
-            );
-        }
+        char *literal = stmt->token_literal(stmt);
+        test_fail("Statement literal", strcmp(literal, "return") == 0)
     }
 
-rs_free_resources:
     ast_program_destroy(program);
     parser_destroy(parser);
-
-    if (passed == false) {
-        printf("Test 'return_stmts' has failed!\n");
-    }
-    else {
-        printf("Test 'return_stmts' has passed!\n");
-    }
+    test_report()
 }
 
 bool
 test_let_stmt (stmt_t *stmt, char *expected_identifier) {
     if (stmt->type != STATEMENT_LET) {
         printf(
-            "ERROR: Statement type != '%d', got '%d' instead!\n", 
+            "ERROR | Statement type != '%d', got '%d' instead!\n", 
             STATEMENT_LET, stmt->type
         );
         return false;
@@ -639,7 +622,7 @@ test_let_stmt (stmt_t *stmt, char *expected_identifier) {
 
     if (strcmp(TOKEN_LITERAL(stmt), "let") != 0) {
         printf(
-            "ERROR: stmt->token_literal() not 'let'. got '%s'\n", 
+            "ERROR | stmt->token_literal() not 'let'. got '%s'\n", 
             stmt->token_literal(stmt)
         );
         return false;
@@ -652,21 +635,23 @@ test_let_stmt (stmt_t *stmt, char *expected_identifier) {
 
 void
 test_let_stmts() {
+    printf("[Test] 'let_stmts'\n");
     char *input_raw = 
         "let x = 5;\n"
         "let y = 10;\n"
         "let foobar = 838383;\n";
     char *input = strdup(input_raw);
 
-    bool passed = true;
-
     lexer_t *lexer = lexer_create(input);
     parser_t *parser = parser_create(lexer);
     program_t *program = parser_parse_program(parser);
 
-    TEST_CHECK_PARSER_ERRORS(parser, ls_free_resources)
-    TEST_CHECK_PROGRAM_NOT_NULL(program, ls_free_resources)
-    TEST_CHECK_LIST_LEN(program->statements, 3, ls_free_resources)
+    test_fail(
+        "Parser initialization",
+        !parser_check_errors(parser) &&
+        (program != NULL) && 
+        (ll_length(program->statements) == 3)
+    )
 
     char *tests[] = {
         "x",
@@ -678,28 +663,19 @@ test_let_stmts() {
     list cursor = NULL;
     while ((cursor = ll_iterator(program->statements, cursor)) != NULL) {
         stmt_t *stmt = (stmt_t *) cursor->data;
-        if (!test_let_stmt(stmt, tests[index])) {
-            passed = false;
-            goto ls_free_resources;
-        }
         
+        test_fail("Valid let stmt", test_let_stmt(stmt, tests[index]))
         index++;    
     }
 
-ls_free_resources:
     ast_program_destroy(program);
     parser_destroy(parser);
-
-    if (passed == false) {
-        printf("Test 'let_stmts' has failed!\n");
-    }
-    else {
-        printf("Test 'let_stmts' has passed!\n");
-    }
+    test_report()
 }
 
 void 
 test_token () {
+    printf("[Test] 'token'\n");
     char *input_raw = 
         "let five = 5;\n"
         "let ten = 10;\n"
@@ -722,8 +698,6 @@ test_token () {
         "10 == 10;\n"
         "10 != 9;\n";
     char *input = strdup(input_raw);
-
-    bool passed = true;
 
     token_t tests[] = {
         {TOKEN_LET, "let", 0, 0},
@@ -809,45 +783,13 @@ test_token () {
         token_t token = lexer_next_token(lexer);
         token_t expected = tests[index];
 
-        if (token.type != expected.type) {
-            passed = false;
-            printf(
-                "tests[%d] | tokentype wrong. expected `%s`, got `%s`\n",
-                index,
-                token_name(token.type),
-                token_name(expected.type)
-            );
-        }
-
-        if (strcmp(token.literal, expected.literal) != 0) {
-            passed = false;
-            printf(
-                "tests[%d] | literal wrong. expected `%s`, got `%s`\n",
-                index,
-                token.literal,
-                expected.literal
-            );
-        }
-
-        if (token.position != expected.position) {
-            passed = false;
-            printf(
-                "tests[%d] | position wrong. expected position '%d', got '%d'\n", 
-                index,
-                expected.position,
-                token.position
-            );
-        }
+        test_fail("Token type", token.type == expected.type)
+        test_fail("Token literal", strcmp(token.literal, expected.literal) == 0)
+        test_fail("Token position", token.position == expected.position)
 
         token_destroy(&token);
     }
 
-    if (passed == false) {
-        printf("Test 'token' has failed!\n");
-    }
-    else {
-        printf("Test 'token' has passed!\n");
-    }
-
     lexer_destroy(lexer);
+    test_report()
 }

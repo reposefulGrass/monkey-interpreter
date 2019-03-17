@@ -1,5 +1,5 @@
 
-HEADERS = token.h lexer.h ast.h parser.h statement.h expression.h
+HEADERS = token.h lexer.h ast.h parser.h statement.h expression.h test.h
 LIBS = token.o lexer.o ast.o parser.o statement.o expression.o
 DEPS = linked_list/linked_list.o dynamic_string/dynamic_string.o
 FLAGS = -Wall -Wextra -Werror -pedantic -g

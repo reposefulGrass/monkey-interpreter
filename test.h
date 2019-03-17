@@ -2,6 +2,31 @@
 #ifndef TEST_H
 #define TEST_H
 
+int __test_num = 0;
+int __failed_tests = 0;
+
+// thanks https://github.com/antirez
+#define test_fail(desc, cond) do {              \
+    __test_num++;                               \
+    if (!(cond)) {                              \
+        printf("  FAILED @%d #%d | %s\n", __LINE__, __test_num, desc); \
+        __failed_tests++;                       \
+    }                                           \
+    } while (0); 
+
+#define test_report() do {                      \
+    printf(                                     \
+        "%d tests, %d passed, %d failed\n\n",   \
+        __test_num,                             \
+        __test_num - __failed_tests,            \
+        __failed_tests                          \
+    );                                          \
+    __test_num = 0;                             \
+    __failed_tests = 0;                         \
+    } while (0); 
+
+
+// DEPRECATED (DO NOT USE | IN PROCESS OF REMOVAL)
 #define TEST_CHECK_PARSER_ERRORS(parser, label) \
     if (parser_check_errors(parser)) { \
         passed = false; \
@@ -11,7 +36,7 @@
 #define TEST_CHECK_PROGRAM_NOT_NULL(program, label) \
     if ((program) == NULL) { \
         passed = false; \
-        printf("ERROR: Failed ot initialize 'program'!\n"); \
+        printf("ERROR: Failed to initialize 'program'!\n"); \
         goto label; \
     }
 
