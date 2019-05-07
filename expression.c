@@ -249,9 +249,10 @@ expr_infix_string (expr_t *expr) {
     ds_append(dstring, right);
     ds_append(dstring, ")");
 
-    char *string = ds_to_string(&dstring);
     free(left);
     free(right);
+
+    char *string = ds_to_string(&dstring);
     return string;
 }
 
@@ -266,4 +267,68 @@ expr_infix_destroy (expr_t *expr) {
     DESTROY(infix.right_expr);
     free(expr);
 }
+
+// ======== IF ========
+
+expr_t *    
+expr_if_create (token_t token, expr_t *cond, stmt_t *cons, stmt_t *alt) {
+    expr_t *expr = (expr_t *) malloc(sizeof(expr_t));
+    if (expr == NULL) {
+        fprintf(stderr, "ERROR in 'expr_if_create': Failed to allocate 'expr'!\n");
+        exit(EXIT_FAILURE);
+    }
+
+    expr->type = EXPRESSION_IF;
+    EXPR_IF(expr) = (if_t) {
+        .token = token,
+        .condition = cond,
+        .consequence = cons,
+        .alternative = alt
+    };
+
+    expr->token_literal = expr_if_token_literal;
+    expr->string = expr_if_string;
+    expr->destroy = expr_if_destroy;
+
+    return expr;
+}
+
+
+char *      
+expr_if_token_literal (expr_t *expr) {
+    if_t expr_if = EXPR_IF(expr);
+    return expr_if.token.literal;
+}
+
+
+char *      
+expr_if_string (expr_t *expr) {
+    if_t expr_if = EXPR_IF(expr);
+    dstr_t *dstring = ds_initialize();
+
+    ds_append(dstring, "if");
+    ds_append(dstring, STRING(expr_if.condition));
+    ds_append(dstring, " ");
+    ds_append(dstring, STRING(expr_if.consequence));
+
+    if (expr_if.alternative != NULL) {
+        ds_append(dstring, "else");
+        ds_append(dstring, STRING(expr_if.alternative));
+    }
+
+    char *string = ds_to_string(&dstring);
+    return string;
+}
+
+
+void
+expr_if_destroy (expr_t *expr) {
+    if_t expr_if = EXPR_IF(expr);
+
+    token_destroy(&expr_if.token);
+    DESTROY(expr_if.condition);
+    DESTROY(expr_if.consequence);
+    if (expr_if.alternative) DESTROY(expr_if.alternative);
+}
+
 

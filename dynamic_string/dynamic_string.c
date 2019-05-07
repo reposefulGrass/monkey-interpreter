@@ -62,8 +62,10 @@ ds_append (dstr_t *str, char *s) {
 char *
 ds_to_string (dstr_t **str) {
     char *string = (*str)->string;
+
     free(*str);
     *str = NULL;
+
     return string;
 }
 

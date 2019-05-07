@@ -77,6 +77,9 @@ parser_parse_stmt (parser_t *p) {
         case TOKEN_RETURN:
             return parser_parse_stmt_return(p);
 
+        case TOKEN_LBRACE:
+            return parser_parse_stmt_block(p);
+
         default:
             return parser_parse_stmt_expr(p);
     }
@@ -147,40 +150,27 @@ parser_parse_stmt_expr (parser_t *parser) {
 }
 
 
-/* First, parse it as a prefix expression. Then check if the peek (next) 
- * token is an operator of an infix expression. 
- *
- * If it is an infix expression and its precedence is higher than 
- * the previous precedence: 
- *      parse and return the entire expression as an infix expression. 
- * Else 
- *      return the already parsed prefix expression
-*/
-expr_t *  
-parser_parse_expr (parser_t *parser, precedence_t precedence) {
-    expr_fn_ptr prefix = parser_get_prefix_fn(parser->current_token.type);     
-    if (prefix == NULL) {
-        parser_no_prefix_fn_error(parser);
-        return NULL; 
-    }
-    expr_t *left_expr = prefix(parser);
+stmt_t *
+parser_parse_stmt_block(parser_t *parser) {
+    token_t literal = token_dup(parser->current_token); 
+    parser_next_token(parser);
+
+    list block;
+    ll_initialize(&block);
 
     while (
-        !parser_peek_token_is(parser, TOKEN_SEMICOLON) && 
-        precedence < parser_peek_precedence(parser)
+        ! parser_current_token_is(parser, TOKEN_RBRACE) &&
+        ! parser_current_token_is(parser, TOKEN_EOF)
     ) {
-        expr_fn_ptr infix = parser_get_infix_fn(parser->peek_token.type);
-        if (infix == NULL) {
-            // since an infix function was not found for peek_token, 
-            // this expr is not an infix expr, so return it as a prefix expr.
-            return left_expr;
-        }
-        
-        parser_next_token(parser); 
-        left_expr = infix(parser, left_expr);
+        stmt_t *stmt = parser_parse_stmt(parser);
+        if (stmt != NULL) {
+            ll_append(&block, (void *) stmt); 
+        }     
+
+        parser_next_token(parser);
     }
 
-    return left_expr;
+    return stmt_block_create(literal, block);
 }
 
 
@@ -220,6 +210,12 @@ parser_get_prefix_fn (tokentype_t type) {
         case TOKEN_MINUS:
             return parser_parse_expr_prefix;
 
+        case TOKEN_LPAREN:
+            return parser_parse_expr_group;
+
+        case TOKEN_IF:
+            return parser_parse_expr_if;
+
         default:
             return NULL;
     } 
@@ -245,6 +241,43 @@ parser_get_infix_fn (tokentype_t type) {
 }
 
 // ======== PARSE EXPRESSION FUNCTIONS ========
+
+/* First, parse it as a prefix expression. Then check if the peek (next) 
+ * token is an operator of an infix expression. 
+ *
+ * If it is an infix expression and its precedence is higher than 
+ * the previous precedence: 
+ *      parse and return the entire expression as an infix expression. 
+ * Else 
+ *      return the already parsed prefix expression
+*/
+expr_t *  
+parser_parse_expr (parser_t *parser, precedence_t precedence) {
+    expr_fn_ptr prefix = parser_get_prefix_fn(parser->current_token.type);     
+    if (prefix == NULL) {
+        parser_no_prefix_fn_error(parser);
+        return NULL; 
+    }
+    expr_t *left_expr = prefix(parser);
+
+    while (
+        !parser_peek_token_is(parser, TOKEN_SEMICOLON) && 
+        precedence < parser_peek_precedence(parser)
+    ) {
+        expr_fn_ptr infix = parser_get_infix_fn(parser->peek_token.type);
+        if (infix == NULL) {
+            // since an infix function was not found for peek_token, 
+            // this expr is not an infix expr, so return it as a prefix expr.
+            return left_expr;
+        }
+        
+        parser_next_token(parser); 
+        left_expr = infix(parser, left_expr);
+    }
+
+    return left_expr;
+}
+
 
 expr_t *
 parser_parse_expr_identifier (parser_t *parser) {
@@ -304,6 +337,48 @@ parser_parse_expr_infix (parser_t *parser, expr_t *left_expr) {
     return infix_expr;
 }
 
+
+expr_t *
+parser_parse_expr_group (parser_t *parser) {
+    parser_next_token(parser);
+
+    expr_t *expr = parser_parse_expr(parser, PRECEDENCE_LOWEST);
+    return (parser_expect_peek(parser, TOKEN_RPAREN)) ? expr : NULL;
+}
+
+
+expr_t *
+parser_parse_expr_if (parser_t *parser) {
+    token_t token = token_dup(parser->current_token);
+
+    if (! parser_expect_peek(parser, TOKEN_LPAREN))
+        return NULL;
+
+    parser_next_token(parser);
+    expr_t *condition = parser_parse_expr(parser, PRECEDENCE_LOWEST);
+
+    if (! parser_expect_peek(parser, TOKEN_RPAREN))
+        return NULL;
+
+    if (! parser_expect_peek(parser, TOKEN_LBRACE))
+        return NULL;
+
+    stmt_t *consequence = parser_parse_stmt(parser);
+    stmt_t *alternative = NULL;
+
+    if (parser_peek_token_is(parser, TOKEN_ELSE)) {
+        parser_next_token(parser);
+
+        if (! parser_expect_peek(parser, TOKEN_LBRACE)) {
+            return NULL;
+        }
+
+        alternative = parser_parse_stmt(parser);
+    }
+
+    return expr_if_create(token, condition, consequence, alternative);
+}
+
 // ======== HELPER FUNCTIONS ========
 
 precedence_t
@@ -346,7 +421,7 @@ parser_expect_peek (parser_t *p, tokentype_t type) {
 void
 parser_invalid_number_error (parser_t *parser) {
     char *error_msg = 
-        "Error at " YELLOW "|%d:%d| " RESET "Expected a number in the range of %d to %d!\n";
+        "Error at " YELLOW "|%d:%d| " RESET "Expected a number in the range of '" GREEN "%d" RESET "' to '" GREEN "%d" RESET "'!\n";
 
     int error_msg_len = 
         strlen(error_msg) - (4 * 2) +   // 4 * strlen("%d")
@@ -375,7 +450,7 @@ parser_no_prefix_fn_error (parser_t *parser) {
 
     char *error_msg = 
         "Error at " YELLOW "|%d:%d| " RESET
-        "No prefix parse function for '%s' found!";
+        "No prefix parse function for '" BLUE "%s" RESET "' found!";
 
     int error_msg_len =
         strlen(typename) + 
@@ -406,7 +481,7 @@ parser_peek_error (parser_t *p, tokentype_t type) {
 
     char *error_msg = 
         "Error at " YELLOW "|%d:%d| " RESET 
-        "Expected token to be " GREEN "'%s'" RESET ", got " RED "'%s'" RESET " instead.";
+        "Expected token to be '" GREEN "%s" RESET "', got '" RED "%s" RESET "' instead.";
 
     int error_msg_len = 
         strlen(curr_type) +

@@ -197,6 +197,66 @@ stmt_expr_destroy (stmt_t *stmt) {
     free(stmt);
 }
 
+// ======== BLOCK ========
+
+stmt_t *    
+stmt_block_create (token_t token, list statements) {
+    stmt_t *stmt = (stmt_t *) malloc(sizeof(stmt_t));
+    if (stmt == NULL) {
+        fprintf(
+            stderr, 
+            "ERROR in 'stmt_block_create': Failed to allocate 'stmt'!\n"
+        );
+        exit(EXIT_FAILURE);
+    }
+
+    stmt->type = STATEMENT_BLOCK;
+    STMT_BLOCK(stmt) = (stmt_block_t) {
+        .token = token_dup(token),
+        .statements = statements
+    };
+
+    stmt->token_literal = stmt_block_token_literal;
+    stmt->string = stmt_block_string;
+    stmt->destroy = stmt_block_destroy;
+
+    return stmt;
+}
+
+
+char *      
+stmt_block_token_literal (stmt_t *stmt) {
+    stmt_block_t block_stmt = STMT_BLOCK(stmt);
+    return block_stmt.token.literal;
+}
+
+
+char *      
+stmt_block_string (stmt_t *stmt) {
+    stmt_block_t block_stmt = STMT_BLOCK(stmt);
+    dstr_t *dstring = ds_initialize();
+
+    list cursor = NULL;
+    while ((cursor = ll_iterator(block_stmt.statements, cursor)) != NULL) {
+        stmt_t *stmt = (stmt_t *) cursor->data;
+
+        char *str = STRING(stmt);
+        ds_append(dstring, str); 
+        //ds_append(dstring, "\n");
+    }
+
+    return ds_to_string(&dstring);
+}
+
+
+void        
+stmt_block_destroy (stmt_t *stmt) {
+    stmt_block_t block_stmt = STMT_BLOCK(stmt);
+
+    token_destroy(&block_stmt.token);
+    ll_destroy(&block_stmt.statements, stmt_destroy);
+}
+
 
 void
 stmt_destroy (void *data) {

@@ -40,6 +40,7 @@ stmt_t *        parser_parse_stmt               (parser_t *p);
 stmt_t *        parser_parse_stmt_let           (parser_t *p);
 stmt_t *        parser_parse_stmt_return        (parser_t *p);
 stmt_t *        parser_parse_stmt_expr          (parser_t *p);
+stmt_t *        parser_parse_stmt_block         (parser_t *p);
 
 expr_t *        parser_parse_expr               (parser_t *p, precedence_t prec);
 expr_t *        parser_parse_expr_identifier    (parser_t *p);
@@ -47,6 +48,8 @@ expr_t *        parser_parse_expr_number        (parser_t *p);
 expr_t *        parser_parse_expr_boolean       (parser_t *p);
 expr_t *        parser_parse_expr_prefix        (parser_t *p);
 expr_t *        parser_parse_expr_infix         (parser_t *p, expr_t *left);
+expr_t *        parser_parse_expr_group         (parser_t *p);
+expr_t *        parser_parse_expr_if            (parser_t *p);
 
 bool            parser_current_token_is         (parser_t *p, tokentype_t t);
 bool            parser_peek_token_is            (parser_t *p, tokentype_t t);

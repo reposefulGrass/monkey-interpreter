@@ -2,34 +2,48 @@
 #ifndef STATEMENT_H
 #define STATEMENT_H
 
-
-#include "expression.h"
-#include "token.h"
+// This declaration is used by expression.h:
+// (hence it being in front of the include)
+typedef struct stmt_block stmt_block_t;
 
 typedef struct statement
     stmt_t;
 
+#include "linked_list/linked_list.h"
+#include "expression.h"
+#include "token.h"
+
+typedef struct stmt_let     stmt_let_t;
+typedef struct stmt_return  stmt_return_t;
+typedef struct stmt_expr    stmt_expr_t;
+
 typedef enum {
     STATEMENT_LET,
     STATEMENT_RETURN,
-    STATEMENT_EXPRESSION
+    STATEMENT_EXPRESSION,
+    STATEMENT_BLOCK
 } stmt_type_t;
 
-typedef struct {
+struct stmt_let {
     token_t token; 
     expr_t *name; 
     expr_t *value;
-} stmt_let_t; 
+};
 
-typedef struct {
+struct stmt_return {
     token_t token;
     expr_t *value;
-} stmt_return_t;
+};
 
-typedef struct {
+struct stmt_expr {
     token_t token;
     expr_t *expr;
-} stmt_expr_t;
+};
+
+struct stmt_block {
+    token_t token;
+    list statements;
+};
 
 //     MACROS FOR ACCESSING THE STMT UNION 
 // ---------------------------------------------
@@ -37,6 +51,7 @@ typedef struct {
 #define STMT_LET(s)     ((s)->stmt.let)
 #define STMT_RETURN(s)  ((s)->stmt.ret)
 #define STMT_EXPR(s)    ((s)->stmt.expr)
+#define STMT_BLOCK(s)   ((s)->stmt.block)
 
 //     MACROS FOR CALLING STATEMENT METHODS
 // --------------------------------------------
@@ -54,6 +69,7 @@ struct statement {
         stmt_let_t let; 
         stmt_return_t ret;
         stmt_expr_t expr;
+        stmt_block_t block;
     } stmt;
 
     // ==== METHODS ====
@@ -78,6 +94,11 @@ stmt_t *    stmt_expr_create            (token_t token, expr_t *value);
 char *      stmt_expr_token_literal     (stmt_t *stmt);
 char *      stmt_expr_string            (stmt_t *stmt);
 void        stmt_expr_destroy           (stmt_t *stmt);
+
+stmt_t *    stmt_block_create           (token_t token, list statements);
+char *      stmt_block_token_literal    (stmt_t *stmt);
+char *      stmt_block_string           (stmt_t *stmt);
+void        stmt_block_destroy          (stmt_t *stmt);
 
 void        stmt_destroy                (void *data);
 

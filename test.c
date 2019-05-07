@@ -18,7 +18,7 @@
 bool test_number (expr_t *expr, int expected_number);
 bool test_identifier (expr_t *expr, char *expected_value);
 bool test_boolean (expr_t *expr, bool value);
-bool test_infix_expression (expr_t *expr, void *left, char *op, void *right, char *type);
+bool test_infix_expression (expr_t *expr, expr_type_t type, void *left, char *op, void *right);
 
 void test_token ();
 void test_let_stmts ();
@@ -30,20 +30,23 @@ void test_prefix_expr();
 void test_infix_expr();
 void test_operator_precedence();
 void test_boolean_expr();
+void test_if_expr();
 
 int 
 main () {
-    test_token();
-    test_let_stmts();
-    test_return_stmts();
-    test_stmt_string();
-    test_identifier_expr();
-    test_number_expr();
-    test_prefix_expr();
-    test_infix_expr();
-    test_operator_precedence();
-    test_boolean_expr();
+    //test_token();
+    //test_let_stmts();
+    //test_return_stmts();
+    //test_stmt_string();
+    //test_identifier_expr();
+    //test_number_expr();
+    //test_prefix_expr();
+    //test_infix_expr();
+    //test_operator_precedence();
+    //test_boolean_expr();
+    test_if_expr();
 }
+
 
 bool
 test_boolean (expr_t *expr, bool value) {
@@ -70,6 +73,7 @@ test_boolean (expr_t *expr, bool value) {
 
     return true;
 }
+
 
 bool
 test_number (expr_t *expr, int expected_number) {
@@ -105,6 +109,7 @@ test_number (expr_t *expr, int expected_number) {
     return true;
 }
 
+
 bool
 test_identifier (expr_t *expr, char *expected) {
     if (expr->type != EXPRESSION_IDENTIFIER) {
@@ -136,9 +141,14 @@ test_identifier (expr_t *expr, char *expected) {
     return true;
 }
 
-// please forgive me
+
+/* PARAMETERS
+ * ----------------------------------------------------------
+ * expr - the infix expr to check
+ * type - the type of the left and right operands of 'expr'
+*/
 bool 
-test_infix_expression (expr_t *expr, void *left, char *op, void *right, char *type) {
+test_infix_expression (expr_t *expr, expr_type_t type, void *left, char *op, void *right) {
     if (expr->type != EXPRESSION_INFIX) {
         printf(
             "ERROR | expr->type != EXPRESSION_INFIX, instead got '%d'!\n", 
@@ -148,32 +158,36 @@ test_infix_expression (expr_t *expr, void *left, char *op, void *right, char *ty
     } 
 
     infix_t infix = EXPR_INFIX(expr);
-    if (strcmp(type, "identifier") == 0) {
-        if (! test_identifier(infix.left_expr, (char *) left)) {
+
+    if (type == EXPRESSION_IDENTIFIER) {
+        if (test_identifier(infix.left_expr, (char *) left) == false ||
+            test_identifier(infix.right_expr, (char *) right) == false) {
             return false;
         }
-        if (! test_identifier(infix.right_expr, (char *) right)) {
+    } 
+    else if (type == EXPRESSION_NUMBER) {
+        int left_operand  = *((int *) left);
+        int right_operand = *((int *) right);
+
+        if (test_number(infix.left_expr,  left_operand)  == false ||
+            test_number(infix.right_expr, right_operand) == false
+        ) {
             return false;
         }
-    }
-    else if (strcmp(type, "number") == 0) {
-        if (! test_number(infix.left_expr, *((int *) left))) {
+
+    } 
+    else if (type == EXPRESSION_BOOLEAN) {
+        // booleans are internally represented as an integer 
+        int left_operand = *((int *) left); 
+        int right_operand = *((int *) right);
+
+        if (test_boolean(infix.left_expr,  left_operand)  == false ||
+            test_boolean(infix.right_expr, right_operand) == false) {
             return false;
         }
-        if (! test_number(infix.right_expr, *((int *) right))) {
-            return false;
-        }
-    }
-    else if (strcmp(type, "boolean") == 0) {
-        if (! test_boolean(infix.left_expr, *((int *) left))) {
-            return false;
-        }
-        if (! test_boolean(infix.right_expr, *((int *) right))) {
-            return false;
-        }
-    }
+    } 
     else {
-        printf("ERROR | Unknown meta type '%s'!\n", type);
+        printf("ERROR | Unknown expr_type_t %d", type);
         exit(EXIT_FAILURE);
     }
 
@@ -187,6 +201,82 @@ test_infix_expression (expr_t *expr, void *left, char *op, void *right, char *ty
 
     return true;
 }
+
+
+void
+test_if_expr () {
+    printf("[Test] 'if_expr'\n");
+
+    char *input = strdup("if (x < y) { true; x } else { y }");
+    
+    lexer_t *lexer = lexer_create(input);
+    parser_t *parser = parser_create(lexer);
+    program_t *program = parser_parse_program(parser);
+
+    test_fail(
+        "Parser initialization",
+        !parser_check_errors(parser) &&
+        (program != NULL) &&
+        (ll_length(program->statements) == 1)
+    )
+
+    stmt_t *stmt = (stmt_t *) program->statements->data;
+    test_fail("Stmt not an expr stmt!", stmt->type == STATEMENT_EXPRESSION)
+
+    expr_t *expr = STMT_EXPR(stmt).expr;
+    test_fail("expr not an if expr", expr->type == EXPRESSION_IF)
+
+    // CONDITIONAL
+    if_t if_expr = EXPR_IF(expr);
+    test_fail(
+        "Invalid infix expression", 
+        test_infix_expression(if_expr.condition, EXPRESSION_IDENTIFIER, "x", "<", "y")
+    )
+
+    // CONSEQUENCE
+    stmt_t *consequence = if_expr.consequence;
+    test_fail("Stmt is not a block", consequence->type == STATEMENT_BLOCK)
+
+    list statements = STMT_BLOCK(consequence).statements;
+    test_fail(
+        "Wrong number of stmts in consequence",
+        (ll_length(statements) == 2)
+    )
+    
+    stmt_t *first_stmt= (stmt_t *) statements->data; 
+    test_fail("Stmt is not an expr stmt", first_stmt->type == STATEMENT_EXPRESSION)
+
+    expr_t *first_expr = STMT_EXPR(first_stmt).expr;
+    test_fail("Invalid boolean", test_boolean(first_expr, true));
+
+    stmt_t *second_stmt = (stmt_t *) statements->next->data; 
+    test_fail("Stmt is not an expr stmt", second_stmt->type == STATEMENT_EXPRESSION)
+
+    expr_t *second_expr = STMT_EXPR(second_stmt).expr;
+    test_fail("Invalid identifier", test_identifier(second_expr, "x"));
+
+    // ALTERNATIVE
+    stmt_t *alternative = if_expr.alternative;
+    test_fail("Stmt is not a block", alternative->type == STATEMENT_BLOCK)
+
+    list else_statements = STMT_BLOCK(alternative).statements;
+    test_fail(
+        "Wrong number of stmts in alternative",
+        (ll_length(else_statements) == 1)
+    )
+    
+    stmt_t *third_stmt= (stmt_t *) else_statements->data; 
+    test_fail("Stmt is not an expr stmt", third_stmt->type == STATEMENT_EXPRESSION)
+
+    expr_t *third_expr = STMT_EXPR(third_stmt).expr;
+    test_fail("Invalid identifier", test_identifier(third_expr, "y"));
+
+
+    ast_program_destroy(program);
+    parser_destroy(parser); 
+    test_report()    
+}
+
 
 void
 test_boolean_expr () {
@@ -230,6 +320,7 @@ test_boolean_expr () {
     parser_destroy(parser); 
     test_report()    
 }
+
 
 typedef struct {
     char *input;
@@ -302,6 +393,26 @@ test_operator_precedence () {
         { // test #15
             "3 < 5 == true",
             "((3 < 5) == true)"
+        },
+        { // test #16
+            "1 + (2 + 3) + 4",
+            "((1 + (2 + 3)) + 4)"
+        },
+        { // test #17
+            "(5 + 5) * 2",
+            "((5 + 5) * 2)"
+        },
+        { // test #18
+            "2 / (5 + 5)",
+            "(2 / (5 + 5))"
+        },
+        { // test #19
+            "-(5 + 5)",
+            "(-(5 + 5))"
+        },
+        { // test #20
+            "!(true == true)",
+            "(!(true == true))"
         }
     };
 
@@ -394,7 +505,9 @@ test_infix_expr () {
             test_fail(
                 "Valid expression number",
                 test_infix_expression(
-                    expr, (void *) &test.left, test.operator, (void *) &test.right, "number"
+                    expr, 
+                    EXPRESSION_NUMBER,
+                    (void *) &test.left, test.operator, (void *) &test.right
                 )
             )
         }
@@ -402,7 +515,9 @@ test_infix_expr () {
             test_fail(
                 "Valid expression boolean",
                 test_infix_expression(
-                    expr, (void *) &test.left, test.operator, (void *) &test.right, "boolean"
+                    expr, 
+                    EXPRESSION_BOOLEAN,
+                    (void *) &test.left, test.operator, (void *) &test.right
                 )
             )
         }

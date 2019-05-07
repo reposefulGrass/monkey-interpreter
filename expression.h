@@ -2,18 +2,22 @@
 #ifndef EXPRESSION_H
 #define EXPRESSION_H
 
-#include <stdbool.h>
-#include "token.h"
-
+// This declaration is used by statement.h:
+// (hence it being in front of the include)
 typedef struct expression
     expr_t;
+
+#include <stdbool.h>
+#include "statement.h"
+#include "token.h"
 
 typedef enum {
     EXPRESSION_IDENTIFIER,
     EXPRESSION_NUMBER,
     EXPRESSION_BOOLEAN,
     EXPRESSION_PREFIX,
-    EXPRESSION_INFIX
+    EXPRESSION_INFIX,
+    EXPRESSION_IF
 } expr_type_t;
 
 typedef struct {
@@ -44,6 +48,13 @@ typedef struct {
     expr_t *right_expr;
 } infix_t;
 
+typedef struct {
+    token_t token;
+    expr_t *condition;
+    stmt_t *consequence;
+    stmt_t *alternative;
+} if_t;
+
 //     MACROS FOR ACCESSING THE EXPR UNION 
 // ---------------------------------------------
 // WARNING: 'e' must be of type 'expr_t *'
@@ -52,6 +63,7 @@ typedef struct {
 #define EXPR_BOOLEAN(e) ((e)->expr.boolean)
 #define EXPR_PREFIX(e)  ((e)->expr.prefix)
 #define EXPR_INFIX(e)   ((e)->expr.infix)
+#define EXPR_IF(e)      ((e)->expr.ifelse)
 
 //     MACROS FOR CALLING EXPR METHODS
 // --------------------------------------------
@@ -71,13 +83,16 @@ struct expression {
         boolean_t boolean;
         prefix_t prefix;
         infix_t infix;
+        if_t ifelse; // Can't use 'if' keyword...
     } expr;
 
     // ==== METHODS ====
-    // this fn will always return a non-allocated literal of the token of the expr
+    // this fn will always return a non-allocated literal of the expr's token
     char *  (*token_literal)    (expr_t *expr);
-    // this fn will always return a heap-allocated string
+    // this fn will always return a heap-allocated string of the expr
     char *  (*string)           (expr_t *expr);
+    // this fn will always destroy the expr completely.
+    // (DOES NOT set expr to NULL)
     void    (*destroy)          (expr_t *expr);
 };
 
@@ -106,7 +121,11 @@ char *      expr_infix_token_literal        (expr_t *expr);
 char *      expr_infix_string               (expr_t *expr);
 void        expr_infix_destroy              (expr_t *expr);
 
-void        expr_destroy                    (expr_t *expr);
+expr_t *    expr_if_create                  (token_t token, expr_t *cond, stmt_t *cons, stmt_t *alt);
+char *      expr_if_token_literal           (expr_t *expr);
+char *      expr_if_string                  (expr_t *expr);
+void        expr_if_destroy                 (expr_t *expr);
 
+void        expr_destroy                    (expr_t *expr);
 
 #endif /* EXPRESSSION_H */

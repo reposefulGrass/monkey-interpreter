@@ -1,2 +1,3 @@
 
-Change "XX_free_resources" labels to "XX_end".
+? Change "XX_free_resources" labels to "XX_end".
+  Remove all dangling pointers.
