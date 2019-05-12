@@ -379,6 +379,34 @@ parser_parse_expr_if (parser_t *parser) {
     return expr_if_create(token, condition, consequence, alternative);
 }
 
+
+expr_t *        
+parser_parse_expr_fn_def (parser_t *parser) {
+    token_t token = token_dup(parser->current_token);
+
+    expr_t *name = parser_parse_expr(parser);
+
+    if (!parser_expect_peek(parser, TOKEN_LPAREN))
+        return NULL;
+
+    parser_next_token(parser);
+    parser_next_token(parser); 
+
+    list parameters;
+    ll_initialize(&parameters);
+    while (
+        !parser_current_token_is(parser, TOKEN_RPAREN) ||
+        !parser_current_token_is(parser, TOKEN_EOF)
+    ) {
+        expr_t *identifer = parser_parse_expr(parser); 
+
+        if (!parser_current_token_is(parser, TOKEN_COMMA)) {
+            break;
+        }
+    }
+}
+
+
 // ======== HELPER FUNCTIONS ========
 
 precedence_t

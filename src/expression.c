@@ -332,3 +332,72 @@ expr_if_destroy (expr_t *expr) {
 }
 
 
+expr_t *
+expr_fn_defn_create (token_t token, list parameters, stmt_t *body) {
+    expr_t *expr = (expr_t *) malloc(sizeof(expr_t));
+    if (expr == NULL) {
+        fprintf(stderr, "ERROR in 'expr_defn_create': Failed to allocate 'expr'!\n");
+        exit(EXIT_FAILURE);
+    }
+
+    expr->type = EXPRESSION_FN_DEFN;
+    EXPR_FN_DEFN(expr) = (expr_fn_defn_t) {
+        .token = token,
+        .parameters = parameters,
+        .body = body 
+    };
+
+    expr->token_literal = expr_fn_defn_token_literal;
+    expr->string = expr_fn_defn_string;
+    expr->destroy = expr_fn_defn_destroy;
+}
+
+
+char *
+expr_fn_defn_token_literal (expr_t *expr) {
+    fn_defn_t expr_fn_defn = EXPR_FN_DEFN(expr);
+    return expr_fn_defn.token.literal;
+}
+
+
+char *      
+expr_fn_defn_string (expr_t *expr) {
+    fn_defn_t expr_fn_defn = EXPR_FN_DEFN(expr);
+    dstr_t *dstring = ds_initialize();
+
+    ds_append(dstring, "fn (");
+
+    bool first_occur = true;
+    list cursor = NULL;
+    while ((cursor = ll_iterator(expr_fn_defn.parameters, cursor)) != NULL) {
+        if (!first_occur) {
+            ds_append(dstring, ", ");
+        }
+
+        expr_t *parameter = (expr_t *) cursor->data;
+        char *str = STRING(parameter);
+        ds_append(dstring, str); 
+
+        first_occur = false;
+    }
+    ds_append(dstring, ") ");
+
+    ds_append(dstring, STRING(expr_fn_defn.body));
+
+    char *string = ds_to_string(&dstring);
+    return string;
+}
+
+
+void    
+expr_fn_defn_destroy (expr_t *expr) {
+    fn_defn_t expr_fn_defn = EXPR_FN_DEFN(expr);
+
+    token_destroy(&expr_fn_defn.token);
+    ll_destroy(&expr_fn_defn.parameters, free);
+    DESTROY(expr_fn_defn.body);
+}
+
+
+
+

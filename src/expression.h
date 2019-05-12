@@ -17,7 +17,8 @@ typedef enum {
     EXPRESSION_BOOLEAN,
     EXPRESSION_PREFIX,
     EXPRESSION_INFIX,
-    EXPRESSION_IF
+    EXPRESSION_IF,
+    EXPRESSION_FN_DEFN
 } expr_type_t;
 
 typedef struct {
@@ -48,12 +49,19 @@ typedef struct {
     expr_t *right_expr;
 } infix_t;
 
-typedef struct {
+typedef struct { 
     token_t token;
     expr_t *condition;
     stmt_t *consequence;
     stmt_t *alternative;
 } if_t;
+
+typedef struct {
+    token_t token;
+    expr_t *name;
+    list parameters;
+    stmt_t *body;
+} fn_defn_t;
 
 //     MACROS FOR ACCESSING THE EXPR UNION 
 // ---------------------------------------------
@@ -64,6 +72,7 @@ typedef struct {
 #define EXPR_PREFIX(e)  ((e)->expr.prefix)
 #define EXPR_INFIX(e)   ((e)->expr.infix)
 #define EXPR_IF(e)      ((e)->expr.ifelse)
+#define EXPR_FN_DEFN(e) ((e)->expr.fn_defn)
 
 //     MACROS FOR CALLING EXPR METHODS
 // --------------------------------------------
@@ -84,6 +93,7 @@ struct expression {
         prefix_t prefix;
         infix_t infix;
         if_t ifelse; // Can't use 'if' keyword...
+        fn_defn_t fn_defn;
     } expr;
 
     // ==== METHODS ====
@@ -125,6 +135,11 @@ expr_t *    expr_if_create                  (token_t token, expr_t *cond, stmt_t
 char *      expr_if_token_literal           (expr_t *expr);
 char *      expr_if_string                  (expr_t *expr);
 void        expr_if_destroy                 (expr_t *expr);
+
+expr_t *    expr_fn_defn_create             (token_t token, expr_t *name, list parameters, stmt_t *body);
+char *      expr_fn_defn_token_literal      (expr_t *expr);
+char *      expr_fn_defn_string             (expr_t *expr);
+void        expr_fn_defn_destroy            (expr_t *expr);
 
 void        expr_destroy                    (expr_t *expr);
 

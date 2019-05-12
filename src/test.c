@@ -31,6 +31,7 @@ void test_infix_expr();
 void test_operator_precedence();
 void test_boolean_expr();
 void test_if_expr();
+void test_fn_defn_expr();
 
 int 
 main () {
@@ -44,7 +45,7 @@ main () {
     //test_infix_expr();
     //test_operator_precedence();
     //test_boolean_expr();
-    test_if_expr();
+    //test_if_expr();
 }
 
 
@@ -200,6 +201,37 @@ test_infix_expression (expr_t *expr, expr_type_t type, void *left, char *op, voi
     }
 
     return true;
+}
+
+
+void
+test_fn_defn_expr () {
+    printf("[Test] 'fn_defn_expr'\n");
+
+    char *input = strdup("fn add (x, y) { x + y; }");
+    
+    lexer_t *lexer = lexer_create(input);
+    parser_t *parser = parser_create(lexer);
+    program_t *program = parser_parse_program(parser);
+
+    test_fail(
+        "Parser initialization",
+        !parser_check_errors(parser) &&
+        (program != NULL) &&
+        (ll_length(program->statements) == 1)
+    )
+
+    stmt_t *stmt = (stmt_t *) program->statements->data;
+    test_fail("Stmt not an expr stmt!", stmt->type == STATEMENT_EXPRESSION)
+
+    expr_t *expr = STMT_EXPR(stmt).expr;
+    test_fail("Expr not an if expr", expr->type == EXPRESSION_IF)
+
+    // test here
+
+    ast_program_destroy(program);
+    parser_destroy(parser); 
+    test_report()    
 }
 
 
