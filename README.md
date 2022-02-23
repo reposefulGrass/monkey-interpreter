@@ -13,8 +13,8 @@ I use several personal auxillary libraries:
 
 I am a masochist. Most other implementations are done in languages
 where you do not have to manage the memory. I also wanted to compare
-how languages are written in C versus Rust; although note that
-I am not the best at C programming; this project will have many flaws
+how languages are written in C versus Rust; note that I am not 
+the best at C programming; this project will have many flaws
 (please tell me if you find any!).
 
 # Progress
